@@ -2,72 +2,68 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>ZTeam Tiers | Leaderboard Oficial</title>
+    <title>ZTeam Leaderboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0d111a; color: white; font-family: 'Inter', sans-serif; }
+        body { background-color: #0d111a; color: white; font-family: sans-serif; }
         
+        /* Botones de filtro */
         .nav-btn {
-            background: #161d2b; border: 1px solid #1f283d; padding: 12px 24px;
-            border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: 700;
-            display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase;
+            background: #161d2b; border: 1px solid #1f283d; padding: 10px 20px;
+            border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold; font-size: 12px;
         }
-        .nav-btn.active { background: #3b82f6; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+        .nav-btn.active { background: #3b82f6; border-color: #60a5fa; }
 
-        /* EFECTO DE BRILLO Y LÍNEA BLANCA */
+        /* EFECTO DE LÍNEA BLANCA Y BRILLO AL PASAR EL MOUSE */
         .player-card {
-            background: #111723; border: 1px solid #1f283d; border-radius: 15px;
-            padding: 15px 25px; margin-bottom: 12px; display: flex; align-items: center;
-            transition: all 0.3s ease; position: relative; overflow: hidden;
+            background: #111723; border: 1px solid #1f283d;
+            border-radius: 10px; padding: 15px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.3s ease;
         }
         .player-card:hover {
-            border-color: #ffffff; /* Línea blanca */
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); /* Brillo suave */
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
             transform: translateX(5px);
         }
 
         /* COLORES DE PODIO */
-        .rank-1 { color: #ffca28; text-shadow: 0 0 10px rgba(255, 202, 40, 0.5); }
-        .rank-2 { color: #e0e0e0; text-shadow: 0 0 10px rgba(224, 224, 224, 0.5); }
-        .rank-3 { color: #cd7f32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); }
+        .rank-1 { color: #ffca28; } /* Oro */
+        .rank-2 { color: #e0e0e0; } /* Plata */
+        .rank-3 { color: #cd7f32; } /* Bronce */
 
+        /* Círculos de modalidades */
         .mode-circle {
-            width: 48px; height: 48px; background: #1a2235; border: 2px solid #2d364d;
+            width: 42px; height: 42px; background: #1a2235; border: 2px solid #2d364d;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            position: relative;
+            position: relative; margin-left: 8px;
         }
-        .mode-tier-label {
-            position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-            font-size: 10px; font-weight: 900; background: #000; padding: 2px 8px;
-            border-radius: 50px; border: 1px solid #444; color: #ff4d4d;
+        .mode-tier-badge {
+            position: absolute; bottom: -8px; font-size: 9px; font-weight: 900;
+            background: #000; padding: 1px 5px; border-radius: 4px; border: 1px solid #444; color: #ff4d4d;
         }
     </style>
 </head>
 <body class="p-10">
-    <div class="max-w-5xl mx-auto">
-        <div class="flex items-center justify-between bg-[#161d2b] p-5 rounded-2xl border border-[#1f283d] mb-10">
-            <div class="flex items-center gap-4">
-                <img src="https://i.ibb.co/wr9vP5H/discord-icon-svg.png" width="28" style="filter: brightness(0) invert(1);">
-                <h2 class="font-black text-xl tracking-tight">ZTEAM TIERS</h2>
-            </div>
-            <a href="https://discord.gg/clanzteam" class="bg-indigo-600 px-6 py-2 rounded-xl text-xs font-black uppercase">Unirse</a>
-        </div>
-
-        <div class="flex flex-wrap gap-3 mb-12 justify-center">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-black mb-6 text-center italic">ZTEAM LEADERBOARD</h1>
+        
+        <div class="flex flex-wrap gap-2 mb-10 justify-center">
             <button class="nav-btn active" id="btn-overall" onclick="updateView('overall')">OVERALL</button>
-            <button class="nav-btn" id="btn-bedfight" onclick="updateView('bedfight')"><img src="https://i.ibb.co/g3Xp68q/Shears-JE3-BE2.png" width="20"> BEDFIGHT</button>
-            <button class="nav-btn" id="btn-bedwars" onclick="updateView('bedwars')"><img src="https://i.ibb.co/L58T55Y/Red-Bed-BE.png" width="20"> BEDWARS</button>
-            <button class="nav-btn" id="btn-topfight" onclick="updateView('topfight')"><img src="https://i.ibb.co/sK67f4M/Wooden-Sword-JE3-BE3.png" width="20"> TOPFIGHT</button>
-            <button class="nav-btn" id="btn-blockfight" onclick="updateView('blockfight')"><img src="https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png" width="20"> BLOCKFIGHT</button>
+            <button class="nav-btn" id="btn-bedfight" onclick="updateView('bedfight')">BEDFIGHT</button>
+            <button class="nav-btn" id="btn-bedwars" onclick="updateView('bedwars')">BEDWARS</button>
+            <button class="nav-btn" id="btn-topfight" onclick="updateView('topfight')">TOPFIGHT</button>
+            <button class="nav-btn" id="btn-blockfight" onclick="updateView('blockfight')">BLOCKFIGHT</button>
         </div>
 
-        <div id="leaderboard" class="space-y-3"></div>
+        <div id="leaderboard">Cargando datos...</div>
     </div>
 
     <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv'; // ASEGÚRATE DE QUE SEA EL LINK QUE TERMINA EN output=csv
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
+        
+        // Imágenes en CDN para evitar errores
         const ICONS = {
             bedfight: "https://i.ibb.co/g3Xp68q/Shears-JE3-BE2.png",
             bedwars: "https://i.ibb.co/L58T55Y/Red-Bed-BE.png",
@@ -75,75 +71,83 @@
             blockfight: "https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png"
         };
 
-        let cachedData = [];
+        let rawData = [];
 
-        function fetchData() {
-            // Se fuerza la descarga del CSV ignorando el caché
-            Papa.parse(CSV_URL + "&t=" + new Date().getTime(), {
-                download: true, header: true, skipEmptyLines: true,
+        function loadData() {
+            Papa.parse(CSV_URL + "?t=" + new Date().getTime(), {
+                download: true, header: true,
                 complete: function(results) {
-                    cachedData = results.data;
+                    rawData = results.data.filter(r => r.UUID);
                     updateView('overall');
                 }
             });
         }
 
-        function updateView(category) {
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-' + category).classList.add('active');
+        function updateView(mode) {
+            // Actualizar botones
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + mode).classList.add('active');
 
             let playersMap = {};
-            cachedData.forEach(row => {
-                const uuid = (row.UUID || "").trim();
-                const mod = (row.Modalidad || "").toLowerCase().trim();
-                if (!uuid) return;
 
-                if (category === 'overall' || mod === category) {
+            rawData.forEach(r => {
+                let uuid = r.UUID.trim();
+                let m = r.Modalidad ? r.Modalidad.toLowerCase().trim() : "";
+                
+                if (mode === 'overall' || m === mode) {
                     if (!playersMap[uuid]) {
-                        playersMap[uuid] = { ign: row.Jugador, region: row.Region, pts: 0, modes: {}, uuid: uuid };
+                        playersMap[uuid] = { name: r.Jugador, region: r.Region, pts: 0, modes: {}, uuid: uuid };
                     }
-                    playersMap[uuid].pts += parseInt(row.Puntos || 0);
-                    playersMap[uuid].modes[mod] = row.Tier;
+                    playersMap[uuid].pts += parseInt(r.Puntos || 0);
+                    playersMap[uuid].modes[m] = r.Tier;
                 }
             });
 
-            const sorted = Object.values(playersMap).sort((a,b) => b.pts - a.pts);
-            render(sorted, category);
+            let sorted = Object.values(playersMap).sort((a, b) => b.pts - a.pts);
+            render(sorted, mode);
         }
 
-        function render(players, currentCategory) {
+        function render(players, currentMode) {
             const container = document.getElementById('leaderboard');
-            container.innerHTML = players.map((p, i) => {
-                let rankClass = (i === 0) ? 'rank-1' : (i === 1) ? 'rank-2' : (i === 2) ? 'rank-3' : 'text-slate-700';
+            container.innerHTML = '';
+
+            players.forEach((p, index) => {
+                let rankColor = (index === 0) ? 'rank-1' : (index === 1) ? 'rank-2' : (index === 2) ? 'rank-3' : 'text-gray-500';
                 
-                // Lógica de Modalidades: Si es Overall muestra todos, si no, solo la actual
+                // Si es Bedwars, solo muestra Bedwars. Si es Overall, muestra todo.
                 let modesHtml = '';
-                const modesToShow = currentCategory === 'overall' ? ['bedfight', 'bedwars', 'topfight', 'blockfight'] : [currentCategory];
+                const displayModes = (currentMode === 'overall') ? ['bedfight', 'bedwars', 'topfight', 'blockfight'] : [currentMode];
                 
-                modesToShow.forEach(m => {
-                    const t = p.modes[m] || '-';
-                    modesHtml += `
-                        <div class="mode-circle" style="opacity: ${t !== '-' ? '1' : '0.15'}">
-                            <img src="${ICONS[m]}" class="w-6">
-                            <span class="mode-tier-label">${t}</span>
-                        </div>`;
+                displayModes.forEach(m => {
+                    if(ICONS[m]) {
+                        let tier = p.modes[m] || '-';
+                        modesHtml += `
+                            <div class="mode-circle" style="opacity: ${tier !== '-' ? '1' : '0.2'}">
+                                <img src="${ICONS[m]}" class="w-6">
+                                <span class="mode-tier-badge">${tier}</span>
+                            </div>
+                        `;
+                    }
                 });
 
-                return `
+                container.innerHTML += `
                     <div class="player-card">
-                        <div class="text-3xl font-black italic w-16 ${rankClass}">#${i+1}</div>
-                        <div class="flex-1 flex items-center gap-6">
-                            <img src="https://visage.surgeplay.com/bust/128/${p.uuid}" class="h-16 w-16" onerror="this.src='https://visage.surgeplay.com/bust/128/steve'">
+                        <div class="flex items-center gap-4">
+                            <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
+                            <img src="https://visage.surgeplay.com/bust/64/${p.uuid}" class="rounded shadow-lg" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
                             <div>
-                                <h3 class="text-xl font-black uppercase italic">${p.ign}</h3>
-                                <div class="text-[10px] font-bold text-slate-500 uppercase">${p.pts} PUNTOS • ${p.region}</div>
+                                <div class="font-bold uppercase italic tracking-tighter">${p.name}</div>
+                                <div class="text-[10px] text-blue-400 font-bold">${p.pts} PTS • ${p.region}</div>
                             </div>
                         </div>
-                        <div class="flex gap-3">${modesHtml}</div>
-                    </div>`;
-            }).join('');
+                        <div class="flex items-center">
+                            ${modesHtml}
+                        </div>
+                    </div>
+                `;
+            });
         }
-        window.onload = fetchData;
+        window.onload = loadData;
     </script>
 </body>
 </html>
