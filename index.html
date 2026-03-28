@@ -2,126 +2,57 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZTeam Tiers | Leaderboard Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
-        body { 
-            background-color: #0d111a; 
-            color: white; 
-            font-family: 'Inter', sans-serif; 
-            overflow-x: hidden;
-        }
-
-        /* Efecto de cristal para el banner */
-        .discord-banner {
-            background: linear-gradient(90deg, #161d2b 0%, #1a2235 100%);
-            border: 1px solid #1f283d;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        /* Botones de navegación estilo MCTier */
+        body { background-color: #0d111a; color: white; font-family: 'Inter', sans-serif; }
+        
         .nav-btn {
-            background: #161d2b;
-            border: 1px solid #1f283d;
-            padding: 12px 24px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            background: #161d2b; border: 1px solid #1f283d; padding: 12px 24px;
+            border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: 700;
+            display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase;
         }
+        .nav-btn.active { background: #3b82f6; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
 
-        .nav-btn:hover {
-            border-color: #3b82f6;
-            background: #1a2438;
-        }
-
-        .nav-btn.active {
-            background: #3b82f6;
-            border-color: #60a5fa;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-        }
-
-        /* Tarjetas de Jugadores */
+        /* EFECTO DE BRILLO Y LÍNEA BLANCA */
         .player-card {
-            background: #111723;
-            border: 1px solid #1f283d;
-            border-radius: 15px;
-            padding: 15px 25px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            background: #111723; border: 1px solid #1f283d; border-radius: 15px;
+            padding: 15px 25px; margin-bottom: 12px; display: flex; align-items: center;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
         }
-
         .player-card:hover {
+            border-color: #ffffff; /* Línea blanca */
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); /* Brillo suave */
             transform: translateX(5px);
-            border-color: #2d364d;
         }
 
-        /* Contenedor de círculos de modalidades */
-        .mode-container {
-            display: flex;
-            gap: 12px;
-        }
+        /* COLORES DE PODIO */
+        .rank-1 { color: #ffca28; text-shadow: 0 0 10px rgba(255, 202, 40, 0.5); }
+        .rank-2 { color: #e0e0e0; text-shadow: 0 0 10px rgba(224, 224, 224, 0.5); }
+        .rank-3 { color: #cd7f32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); }
 
         .mode-circle {
-            width: 48px;
-            height: 48px;
-            background: #1a2235;
-            border: 2px solid #2d364d;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 48px; height: 48px; background: #1a2235; border: 2px solid #2d364d;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
             position: relative;
         }
-
-        .mode-icon {
-            width: 26px;
-            height: 26px;
-            object-fit: contain;
-        }
-
         .mode-tier-label {
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            font-weight: 900;
-            background: #000;
-            padding: 2px 8px;
-            border-radius: 50px;
-            border: 1px solid #444;
-            color: #ff4d4d;
-            white-space: nowrap;
+            position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+            font-size: 10px; font-weight: 900; background: #000; padding: 2px 8px;
+            border-radius: 50px; border: 1px solid #444; color: #ff4d4d;
         }
     </style>
 </head>
-<body class="p-4 md:p-10">
-
+<body class="p-10">
     <div class="max-w-5xl mx-auto">
-        <div class="discord-banner flex items-center justify-between p-5 rounded-2xl mb-10">
+        <div class="flex items-center justify-between bg-[#161d2b] p-5 rounded-2xl border border-[#1f283d] mb-10">
             <div class="flex items-center gap-4">
-                <div class="bg-[#5865F2] p-2 rounded-lg">
-                    <img src="https://i.ibb.co/wr9vP5H/discord-icon-svg.png" width="28" style="filter: brightness(0) invert(1);">
-                </div>
-                <div>
-                    <h2 class="font-black text-xl tracking-tight">ZTEAM TIERS</h2>
-                    <p class="text-xs text-slate-400 font-bold">DISCORD.GG/CLANZTEAM</p>
-                </div>
+                <img src="https://i.ibb.co/wr9vP5H/discord-icon-svg.png" width="28" style="filter: brightness(0) invert(1);">
+                <h2 class="font-black text-xl tracking-tight">ZTEAM TIERS</h2>
             </div>
-            <a href="https://discord.gg/clanzteam" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2.5 rounded-xl text-xs font-black uppercase transition-all transform hover:scale-105">Unirse</a>
+            <a href="https://discord.gg/clanzteam" class="bg-indigo-600 px-6 py-2 rounded-xl text-xs font-black uppercase">Unirse</a>
         </div>
 
         <div class="flex flex-wrap gap-3 mb-12 justify-center">
@@ -132,132 +63,87 @@
             <button class="nav-btn" id="btn-blockfight" onclick="updateView('blockfight')"><img src="https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png" width="20"> BLOCKFIGHT</button>
         </div>
 
-        <div id="leaderboard" class="space-y-3">
-            <div class="text-center py-20">
-                <p class="text-slate-500 font-bold uppercase tracking-widest loading">Sincronizando datos...</p>
-            </div>
-        </div>
+        <div id="leaderboard" class="space-y-3"></div>
     </div>
 
     <script>
-        // ¡IMPORTANTE! Reemplaza esto con tu link CSV de Google Sheets
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv'; 
-        
-        // Iconos de Minecraft alojados en CDN (ImgBB)
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv'; // ASEGÚRATE DE QUE SEA EL LINK QUE TERMINA EN output=csv
         const ICONS = {
             bedfight: "https://i.ibb.co/g3Xp68q/Shears-JE3-BE2.png",
             bedwars: "https://i.ibb.co/L58T55Y/Red-Bed-BE.png",
-            topfight: "https://i.ibb.co/sK67f4M/Wooden-Sword_JE3_BE3.png",
-            blockfight: "https://i.ibb.co/F8Sg0zT/White-Wool_JE4_BE2.png"
+            topfight: "https://i.ibb.co/sK67f4M/Wooden-Sword-JE3-BE3.png",
+            blockfight: "https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png"
         };
 
         let cachedData = [];
 
         function fetchData() {
-            // Truco para evitar el caché de Google y obtener datos frescos
-            const finalUrl = CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-            Papa.parse(finalUrl, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
+            // Se fuerza la descarga del CSV ignorando el caché
+            Papa.parse(CSV_URL + "&t=" + new Date().getTime(), {
+                download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    // Filtramos filas vacías basándonos en si tienen UUID
-                    cachedData = results.data.filter(r => (r.UUID || r.uuid || "").trim() !== "");
+                    cachedData = results.data;
                     updateView('overall');
                 }
             });
         }
 
         function updateView(category) {
-            // UI de botones
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById('btn-' + category);
-            if (activeBtn) activeBtn.classList.add('active');
+            document.getElementById('btn-' + category).classList.add('active');
 
             let playersMap = {};
-
             cachedData.forEach(row => {
-                // Mapeo robusto de columnas (acepta mayúsculas/minúsculas)
-                const uuid = (row.UUID || row.uuid || "").trim();
-                const ign = (row.Jugador || row.Nombre || row.ign || row.Jugador || "Unknown").trim();
-                const mod = (row.Modalidad || row.modalidad || "").toLowerCase().trim();
-                const pts = parseInt(row.Puntos || row.puntos || 0);
-                const tier = (row.Tier || row.tier || "-").trim();
-                const region = (row.Region || row.region || "NA").trim();
+                const uuid = (row.UUID || "").trim();
+                const mod = (row.Modalidad || "").toLowerCase().trim();
+                if (!uuid) return;
 
-                if (!uuid || uuid === "") return;
-
-                // Lógica de filtrado y suma
                 if (category === 'overall' || mod === category) {
                     if (!playersMap[uuid]) {
-                        playersMap[uuid] = {
-                            ign: ign,
-                            region: region,
-                            totalPoints: 0,
-                            modes: {},
-                            uuid: uuid
-                        };
+                        playersMap[uuid] = { ign: row.Jugador, region: row.Region, pts: 0, modes: {}, uuid: uuid };
                     }
-                    playersMap[uuid].totalPoints += pts;
-                    playersMap[uuid].modes[mod] = tier;
+                    playersMap[uuid].pts += parseInt(row.Puntos || 0);
+                    playersMap[uuid].modes[mod] = row.Tier;
                 }
             });
 
-            // Ordenar por puntos (de mayor a menor)
-            const sortedPlayers = Object.values(playersMap).sort((a, b) => b.totalPoints - a.totalPoints);
-            renderLeaderboard(sortedPlayers);
+            const sorted = Object.values(playersMap).sort((a,b) => b.pts - a.pts);
+            render(sorted, category);
         }
 
-        function renderLeaderboard(players) {
+        function render(players, currentCategory) {
             const container = document.getElementById('leaderboard');
-            if (players.length === 0) {
-                container.innerHTML = '<div class="text-center py-20 text-slate-600 font-bold">NO HAY REGISTROS EN ESTA CATEGORÍA</div>';
-                return;
-            }
-
-            container.innerHTML = players.map((p, index) => {
+            container.innerHTML = players.map((p, i) => {
+                let rankClass = (i === 0) ? 'rank-1' : (i === 1) ? 'rank-2' : (i === 2) ? 'rank-3' : 'text-slate-700';
+                
+                // Lógica de Modalidades: Si es Overall muestra todos, si no, solo la actual
                 let modesHtml = '';
-                // Generar los 4 círculos de modalidades
-                ['bedfight', 'bedwars', 'topfight', 'blockfight'].forEach(m => {
+                const modesToShow = currentCategory === 'overall' ? ['bedfight', 'bedwars', 'topfight', 'blockfight'] : [currentCategory];
+                
+                modesToShow.forEach(m => {
                     const t = p.modes[m] || '-';
-                    const hasTier = t !== '-';
                     modesHtml += `
-                        <div class="mode-circle" style="opacity: ${hasTier ? '1' : '0.15'}">
-                            <img src="${ICONS[m]}" class="mode-icon" alt="${m}">
+                        <div class="mode-circle" style="opacity: ${t !== '-' ? '1' : '0.15'}">
+                            <img src="${ICONS[m]}" class="w-6">
                             <span class="mode-tier-label">${t}</span>
-                        </div>
-                    `;
+                        </div>`;
                 });
 
-                // Renderizado de Visage Surgeplay para el avatar
                 return `
                     <div class="player-card">
-                        <div class="text-2xl font-black italic w-12 text-slate-700">#${index + 1}</div>
+                        <div class="text-3xl font-black italic w-16 ${rankClass}">#${i+1}</div>
                         <div class="flex-1 flex items-center gap-6">
-                            <div class="relative">
-                                <img src="https://visage.surgeplay.com/bust/128/${p.uuid}" class="h-16 w-16 drop-shadow-lg" alt="${p.ign}" onerror="this.src='https://visage.surgeplay.com/bust/128/steve'">
-                            </div>
+                            <img src="https://visage.surgeplay.com/bust/128/${p.uuid}" class="h-16 w-16" onerror="this.src='https://visage.surgeplay.com/bust/128/steve'">
                             <div>
-                                <h3 class="text-lg font-black uppercase italic tracking-wider">${p.ign}</h3>
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-red-900/30 text-red-400 border border-red-800/50 px-2 py-0.5 rounded text-[10px] font-black tracking-widest">${p.region}</span>
-                                    <span class="text-[10px] font-bold text-slate-500">${p.totalPoints} PTS TOTALES</span>
-                                </div>
+                                <h3 class="text-xl font-black uppercase italic">${p.ign}</h3>
+                                <div class="text-[10px] font-bold text-slate-500 uppercase">${p.pts} PUNTOS • ${p.region}</div>
                             </div>
                         </div>
-                        <div class="mode-container">
-                            ${modesHtml}
-                        </div>
-                    </div>
-                `;
+                        <div class="flex gap-3">${modesHtml}</div>
+                    </div>`;
             }).join('');
         }
-
-        // Carga inicial al cargar la ventana
         window.onload = fetchData;
-        
-        // Recarga automática cada 5 minutos (300,000 ms)
-        setInterval(fetchData, 300000);
     </script>
 </body>
 </html>
