@@ -7,107 +7,124 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         body { background-color: #0d111a; color: #fdfdfd; font-family: 'Segoe UI', sans-serif; }
-        
-        /* Contenedor de la tarjeta */
-        .player-card { 
-            background-color: #161d2b; border: 1px solid #1f283d; 
-            border-radius: 12px; margin-bottom: 25px; height: 95px;
-            display: grid; grid-template-columns: repeat(12, 1fr);
-            align-items: center; position: relative; transition: 0.3s;
-        }
-
-        .player-card:hover { transform: translateY(-3px); border-color: #3b4b6b; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-
-        /* Pestaña de posición corregida (No amontonada) */
-        .rank-badge { 
-            width: 55px; height: 65px; position: absolute; left: 0; 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: 900; font-style: italic; font-size: 1.6rem; 
-            border-radius: 0 12px 12px 0; box-shadow: 4px 0 15px rgba(0,0,0,0.4);
-            z-index: 10;
-        }
-
-        /* Colores de podio degradados */
+        .tab-btn { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; transition: 0.3s; font-weight: bold; text-transform: uppercase; color: #64748b; }
+        .tab-btn.active { border-color: #3b82f6; color: white; background: rgba(59, 130, 246, 0.1); }
+        .player-row { background-color: #161d2b; border: 1px solid #1f283d; border-radius: 12px; margin-bottom: 12px; height: 80px; transition: 0.3s; position: relative; }
+        .rank-box { width: 50px; height: 50px; position: absolute; left: 0; top: 15px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-style: italic; font-size: 1.2rem; border-radius: 0 10px 10px 0; }
         .rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #451a03; }
         .rank-2 { background: linear-gradient(135deg, #94a3b8, #475569); color: #0f172a; }
         .rank-3 { background: linear-gradient(135deg, #b45309, #78350f); color: #fef3c7; }
         .rank-default { background: #1e293b; color: #64748b; }
-
-        /* Efecto de brillo blanco al pasar el mouse por el número */
-        .player-card:hover .rank-badge::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transform: skewX(-20deg); animation: shine 0.6s forwards;
-        }
-        @keyframes shine { 100% { left: 200%; } }
-
-        .tier-text { 
-            font-weight: 900; font-size: 2.2rem; font-style: italic;
-            background-clip: text; -webkit-background-clip: text; color: transparent;
-        }
-
-        .region-tag { background: #7f1d1d; color: #f87171; border: 1px solid #991b1b; padding: 4px 12px; border-radius: 6px; font-weight: 800; }
+        .tier-text { font-weight: 900; font-size: 1.5rem; font-style: italic; background-clip: text; -webkit-background-clip: text; color: transparent; background-image: linear-gradient(to bottom, #ff4d4d, #7f1d1d); }
     </style>
 </head>
-<body class="p-10">
-    <div class="max-w-6xl mx-auto" id="leaderboard">
+<body class="p-6">
+
+    <div class="max-w-6xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-3 gap-4" id="top-cards">
         </div>
 
-    <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
+    <div class="max-w-6xl mx-auto mb-6 flex space-x-4 border-b border-slate-800">
+        <div class="tab-btn active" onclick="changeTab('overall', this)">Overall</div>
+        <div class="tab-btn" onclick="changeTab('topfight', this)">Topfight</div>
+        <div class="tab-btn" onclick="changeTab('bedfight', this)">Bedfight</div>
+        <div class="tab-btn" onclick="changeTab('bedwars', this)">Bedwars</div>
+    </div>
 
-        function getTierGradient(tier) {
-            const t = tier.toUpperCase();
-            if (t.includes('S+')) return 'linear-gradient(#ff4d4d, #990000)';
-            if (t.includes('S')) return 'linear-gradient(#ef4444, #7f1d1d)';
-            if (t.includes('A')) return 'linear-gradient(#fb923c, #9a3412)';
-            if (t.includes('B')) return 'linear-gradient(#4ade80, #14532d)';
-            return 'linear-gradient(#60a5fa, #1e3a8a)';
-        }
+    <div class="max-w-6xl mx-auto" id="player-container">
+        <p class="text-center text-slate-500">Cargando datos de la red...</p>
+    </div>
+
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv'; // REEMPLAZA ESTO
+        let allPlayersData = [];
+        let currentTab = 'overall';
 
         function loadData() {
-            Papa.parse(CSV_URL, {
+            Papa.parse(SHEET_URL, {
                 download: true, header: true,
                 complete: function(results) {
-                    // Filtrar filas vacías y ORDENAR POR PUNTOS
-                    let players = results.data.filter(p => p.Jugador);
-                    players.sort((a, b) => parseInt(b.Puntos || 0) - parseInt(a.Puntos || 0));
-
-                    const container = document.getElementById('leaderboard');
-                    container.innerHTML = '';
-
-                    players.forEach((p, index) => {
-                        const rank = index + 1;
-                        const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-default';
-                        const tierColor = getTierGradient(p.Tier);
-
-                        container.innerHTML += `
-                            <div class="player-card">
-                                <div class="rank-badge ${rankClass}">${rank}</div>
-                                
-                                <div class="col-span-7 flex items-center pl-20">
-                                    <img src="https://visage.surgeplay.com/bust/120/${p.UUID}" class="h-24 -mt-8 drop-shadow-2xl">
-                                    <div class="ml-12">
-                                        <h2 class="text-2xl font-black italic uppercase leading-none">${p.Jugador}</h2>
-                                        <p class="text-[11px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">
-                                            <span class="text-amber-500">✦</span> Combat Master (${p.Puntos} points)
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="col-span-2 flex justify-center">
-                                    <span class="region-tag uppercase text-xs">${p.Region}</span>
-                                </div>
-
-                                <div class="col-span-3 text-right pr-12">
-                                    <span class="tier-text" style="background-image: ${tierColor}">${p.Tier}</span>
-                                </div>
-                            </div>
-                        `;
-                    });
+                    allPlayersData = results.data.filter(p => p.Jugador);
+                    renderTops();
+                    renderList();
                 }
             });
         }
+
+        function renderTops() {
+            const modalities = ['topfight', 'bedfight', 'bedwars'];
+            const topCards = document.getElementById('top-cards');
+            topCards.innerHTML = '';
+
+            modalities.forEach(mod => {
+                const sorted = [...allPlayersData].sort((a, b) => parseInt(b[`Puntos ${capitalize(mod)}`] || 0) - parseInt(a[`Puntos ${capitalize(mod)}`] || 0));
+                const top1 = sorted[0];
+                topCards.innerHTML += `
+                    <div class="bg-slate-900 p-4 rounded-xl border border-blue-900/30 flex items-center">
+                        <img src="https://visage.surgeplay.com/bust/60/${top1.UUID}" class="mr-4">
+                        <div>
+                            <div class="text-[10px] text-blue-400 font-bold uppercase">${mod} Leader</div>
+                            <div class="font-black italic uppercase">${top1.Jugador}</div>
+                            <div class="text-xs text-slate-400">${top1[`Tier ${capitalize(mod)}`]}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderList() {
+            const container = document.getElementById('player-container');
+            container.innerHTML = '';
+
+            let displayList = allPlayersData.map(p => {
+                let pts = 0;
+                let displayTier = "";
+                
+                if (currentTab === 'overall') {
+                    pts = parseInt(p["Puntos Topfight"] || 0) + parseInt(p["Puntos Bedfight"] || 0) + parseInt(p["Puntos Bedwars"] || 0);
+                    displayTier = "MVP"; 
+                } else {
+                    const modLabel = capitalize(currentTab);
+                    pts = parseInt(p[`Puntos ${modLabel}`] || 0);
+                    displayTier = p[`Tier ${modLabel}`] || "None";
+                }
+                return { ...p, calculatedPts: pts, currentTier: displayTier };
+            });
+
+            displayList.sort((a, b) => b.calculatedPts - a.calculatedPts);
+
+            displayList.forEach((p, index) => {
+                const pos = index + 1;
+                const rankClass = pos <= 3 ? `rank-${pos}` : 'rank-default';
+                container.innerHTML += `
+                    <div class="player-row grid grid-cols-12 items-center p-4">
+                        <div class="col-span-1"><div class="rank-box ${rankClass}">${pos}</div></div>
+                        <div class="col-span-6 flex items-center pl-12">
+                            <img src="https://visage.surgeplay.com/bust/80/${p.UUID}" class="h-16 -mt-2">
+                            <div class="ml-6">
+                                <span class="text-lg font-black uppercase italic">${p.Jugador}</span>
+                                <div class="text-[10px] text-slate-500 font-bold uppercase">${p.calculatedPts} Total Points</div>
+                            </div>
+                        </div>
+                        <div class="col-span-2 text-center">
+                            <span class="bg-blue-900/20 text-blue-400 border border-blue-800/50 px-3 py-1 rounded text-[10px] font-bold uppercase">${p.Región}</span>
+                        </div>
+                        <div class="col-span-3 text-right pr-6">
+                            <span class="tier-text">${p.currentTier}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function changeTab(tab, el) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            renderList();
+        }
+
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
         window.onload = loadData;
     </script>
 </body>
