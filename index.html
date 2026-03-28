@@ -2,154 +2,110 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>ZTeam Leaderboard</title>
+    <title>VayluxMC | Tiers System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { background-color: #0d111a; color: white; font-family: sans-serif; }
+        body { background-color: #0d111a; color: #fdfdfd; font-family: 'Segoe UI', sans-serif; }
         
-        .nav-btn {
-            background: #161d2b; border: 1px solid #1f283d; padding: 8px 16px;
-            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px;
-            transition: 0.2s;
-        }
-        .nav-btn.active { background: #3b82f6; border-color: #60a5fa; }
-
-        /* EFECTO BRILLO Y LÍNEA BLANCA AL PASAR EL MOUSE */
-        .player-card {
-            background: #111723; border: 1px solid #1f283d;
-            border-radius: 10px; padding: 15px; margin-bottom: 10px;
-            display: flex; align-items: center; justify-content: space-between;
-            transition: all 0.3s ease;
-        }
-        .player-card:hover {
-            border-color: #ffffff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
-            transform: translateX(5px);
+        /* Contenedor de la tarjeta */
+        .player-card { 
+            background-color: #161d2b; border: 1px solid #1f283d; 
+            border-radius: 12px; margin-bottom: 25px; height: 95px;
+            display: grid; grid-template-columns: repeat(12, 1fr);
+            align-items: center; position: relative; transition: 0.3s;
         }
 
-        /* COLORES DE PODIO */
-        .rank-1 { color: #ffca28; filter: drop-shadow(0 0 5px rgba(255,202,40,0.3)); }
-        .rank-2 { color: #e0e0e0; filter: drop-shadow(0 0 5px rgba(224,224,224,0.3)); }
-        .rank-3 { color: #cd7f32; filter: drop-shadow(0 0 5px rgba(205,127,50,0.3)); }
+        .player-card:hover { transform: translateY(-3px); border-color: #3b4b6b; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
 
-        .mode-circle {
-            width: 44px; height: 44px; background: #1a2235; border: 2px solid #2d364d;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            position: relative; margin-left: 10px;
+        /* Pestaña de posición corregida (No amontonada) */
+        .rank-badge { 
+            width: 55px; height: 65px; position: absolute; left: 0; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 900; font-style: italic; font-size: 1.6rem; 
+            border-radius: 0 12px 12px 0; box-shadow: 4px 0 15px rgba(0,0,0,0.4);
+            z-index: 10;
         }
-        .mode-tier-tag {
-            position: absolute; bottom: -8px; font-size: 9px; font-weight: 900;
-            background: #000; padding: 1px 6px; border-radius: 4px; border: 1px solid #444; color: #ff4d4d;
+
+        /* Colores de podio degradados */
+        .rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #451a03; }
+        .rank-2 { background: linear-gradient(135deg, #94a3b8, #475569); color: #0f172a; }
+        .rank-3 { background: linear-gradient(135deg, #b45309, #78350f); color: #fef3c7; }
+        .rank-default { background: #1e293b; color: #64748b; }
+
+        /* Efecto de brillo blanco al pasar el mouse por el número */
+        .player-card:hover .rank-badge::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-20deg); animation: shine 0.6s forwards;
         }
+        @keyframes shine { 100% { left: 200%; } }
+
+        .tier-text { 
+            font-weight: 900; font-size: 2.2rem; font-style: italic;
+            background-clip: text; -webkit-background-clip: text; color: transparent;
+        }
+
+        .region-tag { background: #7f1d1d; color: #f87171; border: 1px solid #991b1b; padding: 4px 12px; border-radius: 6px; font-weight: 800; }
     </style>
 </head>
 <body class="p-10">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-black mb-8 text-center italic tracking-tighter text-white">ZTEAM RANKING</h1>
-        
-        <div class="flex flex-wrap gap-2 mb-10 justify-center">
-            <button class="nav-btn active" id="btn-overall" onclick="filterTab('overall')">OVERALL</button>
-            <button class="nav-btn" id="btn-bedfight" onclick="filterTab('bedfight')">BEDFIGHT</button>
-            <button class="nav-btn" id="btn-bedwars" onclick="filterTab('bedwars')">BEDWARS</button>
-            <button class="nav-btn" id="btn-topfight" onclick="filterTab('topfight')">TOPFIGHT</button>
-            <button class="nav-btn" id="btn-blockfight" onclick="filterTab('blockfight')">BLOCKFIGHT</button>
+    <div class="max-w-6xl mx-auto" id="leaderboard">
         </div>
 
-        <div id="leaderboard">Cargando base de datos...</div>
-    </div>
-
     <script>
-        // TU LINK DE GOOGLE SHEETS (CSV)
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv'; 
-        
-        const ICONS = {
-            bedfight: "https://i.ibb.co/g3Xp68q/Shears-JE3-BE2.png",
-            bedwars: "https://i.ibb.co/L58T55Y/Red-Bed-BE.png",
-            topfight: "https://i.ibb.co/sK67f4M/Wooden-Sword-JE3-BE3.png",
-            blockfight: "https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png"
-        };
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
 
-        let db = [];
+        function getTierGradient(tier) {
+            const t = tier.toUpperCase();
+            if (t.includes('S+')) return 'linear-gradient(#ff4d4d, #990000)';
+            if (t.includes('S')) return 'linear-gradient(#ef4444, #7f1d1d)';
+            if (t.includes('A')) return 'linear-gradient(#fb923c, #9a3412)';
+            if (t.includes('B')) return 'linear-gradient(#4ade80, #14532d)';
+            return 'linear-gradient(#60a5fa, #1e3a8a)';
+        }
 
         function loadData() {
-            // CORRECCIÓN DEL LINK: Usamos & en lugar de ? para no romper el URL de Google
-            const finalUrl = CSV_URL + "&t=" + new Date().getTime();
-            
-            Papa.parse(finalUrl, {
-                download: true, 
-                header: true,
-                skipEmptyLines: true,
-                complete: function(res) {
-                    db = res.data;
-                    filterTab('overall');
-                },
-                error: function(err) {
-                    document.getElementById('leaderboard').innerHTML = "Error de conexión. Revisa el link del CSV.";
-                }
-            });
-        }
+            Papa.parse(CSV_URL, {
+                download: true, header: true,
+                complete: function(results) {
+                    // Filtrar filas vacías y ORDENAR POR PUNTOS
+                    let players = results.data.filter(p => p.Jugador);
+                    players.sort((a, b) => parseInt(b.Puntos || 0) - parseInt(a.Puntos || 0));
 
-        function filterTab(mode) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            const activeBtn = document.getElementById('btn-' + mode);
-            if(activeBtn) activeBtn.classList.add('active');
+                    const container = document.getElementById('leaderboard');
+                    container.innerHTML = '';
 
-            let players = {};
-            db.forEach(r => {
-                let id = (r.UUID || "").trim();
-                let m = (r.Modalidad || "").toLowerCase().trim();
-                if (!id) return;
+                    players.forEach((p, index) => {
+                        const rank = index + 1;
+                        const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-default';
+                        const tierColor = getTierGradient(p.Tier);
 
-                if (mode === 'overall' || m === mode) {
-                    if (!players[id]) {
-                        players[id] = { ign: r.Jugador, region: r.Region, pts: 0, tiers: {}, uuid: id };
-                    }
-                    players[id].pts += parseInt(r.Puntos || 0);
-                    players[id].tiers[m] = r.Tier;
-                }
-            });
+                        container.innerHTML += `
+                            <div class="player-card">
+                                <div class="rank-badge ${rankClass}">${rank}</div>
+                                
+                                <div class="col-span-7 flex items-center pl-20">
+                                    <img src="https://visage.surgeplay.com/bust/120/${p.UUID}" class="h-24 -mt-8 drop-shadow-2xl">
+                                    <div class="ml-12">
+                                        <h2 class="text-2xl font-black italic uppercase leading-none">${p.Jugador}</h2>
+                                        <p class="text-[11px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">
+                                            <span class="text-amber-500">✦</span> Combat Master (${p.Puntos} points)
+                                        </p>
+                                    </div>
+                                </div>
 
-            let sorted = Object.values(players).sort((a, b) => b.pts - a.pts);
-            draw(sorted, mode);
-        }
+                                <div class="col-span-2 flex justify-center">
+                                    <span class="region-tag uppercase text-xs">${p.Region}</span>
+                                </div>
 
-        function draw(data, currentMode) {
-            const container = document.getElementById('leaderboard');
-            container.innerHTML = '';
-
-            data.forEach((p, i) => {
-                let rankStyle = (i === 0) ? 'rank-1' : (i === 1) ? 'rank-2' : (i === 2) ? 'rank-3' : 'text-gray-500';
-                
-                let circles = '';
-                // MOSTRAR SOLO LA MODALIDAD SELECCIONADA (O TODAS EN OVERALL)
-                const activeModes = (currentMode === 'overall') ? ['bedfight', 'bedwars', 'topfight', 'blockfight'] : [currentMode];
-                
-                activeModes.forEach(m => {
-                    let t = p.tiers[m] || '-';
-                    if (ICONS[m]) {
-                        circles += `
-                            <div class="mode-circle" style="opacity: ${t !== '-' ? '1' : '0.15'}">
-                                <img src="${ICONS[m]}" class="w-6">
-                                <span class="mode-tier-tag">${t}</span>
+                                <div class="col-span-3 text-right pr-12">
+                                    <span class="tier-text" style="background-image: ${tierColor}">${p.Tier}</span>
+                                </div>
                             </div>
                         `;
-                    }
-                });
-
-                container.innerHTML += `
-                    <div class="player-card">
-                        <div class="flex items-center gap-4">
-                            <span class="text-2xl font-black italic ${rankStyle}">#${i + 1}</span>
-                            <img src="https://visage.surgeplay.com/bust/64/${p.uuid}" class="h-14 w-14" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
-                            <div>
-                                <div class="font-bold uppercase italic tracking-tight">${p.ign}</div>
-                                <div class="text-[10px] text-blue-400 font-bold tracking-widest">${p.pts} PUNTOS • ${p.region}</div>
-                            </div>
-                        </div>
-                        <div class="flex">${circles}</div>
-                    </div>
-                `;
+                    });
+                }
             });
         }
         window.onload = loadData;
