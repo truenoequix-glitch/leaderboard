@@ -8,14 +8,13 @@
     <style>
         body { background-color: #0d111a; color: white; font-family: sans-serif; }
         
-        /* Botones de filtro */
         .nav-btn {
-            background: #161d2b; border: 1px solid #1f283d; padding: 10px 20px;
-            border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold; font-size: 12px;
+            background: #161d2b; border: 1px solid #1f283d; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px;
         }
-        .nav-btn.active { background: #3b82f6; border-color: #60a5fa; }
+        .nav-btn.active { background: #3b82f6; }
 
-        /* EFECTO DE LÍNEA BLANCA Y BRILLO AL PASAR EL MOUSE */
+        /* EFECTO BRILLO Y LÍNEA BLANCA REQUERIDO */
         .player-card {
             background: #111723; border: 1px solid #1f283d;
             border-radius: 10px; padding: 15px; margin-bottom: 10px;
@@ -23,47 +22,46 @@
             transition: all 0.3s ease;
         }
         .player-card:hover {
-            border-color: #ffffff;
+            border-color: #ffffff; /* Línea blanca al pasar mouse */
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
             transform: translateX(5px);
         }
 
-        /* COLORES DE PODIO */
-        .rank-1 { color: #ffca28; } /* Oro */
-        .rank-2 { color: #e0e0e0; } /* Plata */
-        .rank-3 { color: #cd7f32; } /* Bronce */
+        /* COLORES DE PUESTO 1, 2 Y 3 */
+        .rank-1 { color: #ffca28; filter: drop-shadow(0 0 5px rgba(255,202,40,0.3)); }
+        .rank-2 { color: #e0e0e0; filter: drop-shadow(0 0 5px rgba(224,224,224,0.3)); }
+        .rank-3 { color: #cd7f32; filter: drop-shadow(0 0 5px rgba(205,127,50,0.3)); }
 
-        /* Círculos de modalidades */
         .mode-circle {
-            width: 42px; height: 42px; background: #1a2235; border: 2px solid #2d364d;
+            width: 44px; height: 44px; background: #1a2235; border: 2px solid #2d364d;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            position: relative; margin-left: 8px;
+            position: relative; margin-left: 10px;
         }
-        .mode-tier-badge {
+        .mode-tier-tag {
             position: absolute; bottom: -8px; font-size: 9px; font-weight: 900;
-            background: #000; padding: 1px 5px; border-radius: 4px; border: 1px solid #444; color: #ff4d4d;
+            background: #000; padding: 1px 6px; border-radius: 4px; border: 1px solid #444; color: #ff4d4d;
         }
     </style>
 </head>
 <body class="p-10">
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-black mb-6 text-center italic">ZTEAM LEADERBOARD</h1>
+        <h1 class="text-3xl font-black mb-8 text-center italic">ZTEAM RANKING</h1>
         
         <div class="flex flex-wrap gap-2 mb-10 justify-center">
-            <button class="nav-btn active" id="btn-overall" onclick="updateView('overall')">OVERALL</button>
-            <button class="nav-btn" id="btn-bedfight" onclick="updateView('bedfight')">BEDFIGHT</button>
-            <button class="nav-btn" id="btn-bedwars" onclick="updateView('bedwars')">BEDWARS</button>
-            <button class="nav-btn" id="btn-topfight" onclick="updateView('topfight')">TOPFIGHT</button>
-            <button class="nav-btn" id="btn-blockfight" onclick="updateView('blockfight')">BLOCKFIGHT</button>
+            <button class="nav-btn active" id="btn-overall" onclick="filterTab('overall')">OVERALL</button>
+            <button class="nav-btn" id="btn-bedfight" onclick="filterTab('bedfight')">BEDFIGHT</button>
+            <button class="nav-btn" id="btn-bedwars" onclick="filterTab('bedwars')">BEDWARS</button>
+            <button class="nav-btn" id="btn-topfight" onclick="filterTab('topfight')">TOPFIGHT</button>
+            <button class="nav-btn" id="btn-blockfight" onclick="filterTab('blockfight')">BLOCKFIGHT</button>
         </div>
 
-        <div id="leaderboard">Cargando datos...</div>
+        <div id="leaderboard">Cargando base de datos...</div>
     </div>
 
     <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv'; 
         
-        // Imágenes en CDN para evitar errores
+        // CDNs para las imágenes de modalidades
         const ICONS = {
             bedfight: "https://i.ibb.co/g3Xp68q/Shears-JE3-BE2.png",
             bedwars: "https://i.ibb.co/L58T55Y/Red-Bed-BE.png",
@@ -71,60 +69,58 @@
             blockfight: "https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png"
         };
 
-        let rawData = [];
+        let db = [];
 
         function loadData() {
             Papa.parse(CSV_URL + "?t=" + new Date().getTime(), {
                 download: true, header: true,
-                complete: function(results) {
-                    rawData = results.data.filter(r => r.UUID);
-                    updateView('overall');
+                complete: function(res) {
+                    db = res.data.filter(r => r.UUID);
+                    filterTab('overall');
                 }
             });
         }
 
-        function updateView(mode) {
-            // Actualizar botones
+        function filterTab(mode) {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + mode).classList.add('active');
 
-            let playersMap = {};
-
-            rawData.forEach(r => {
-                let uuid = r.UUID.trim();
+            let players = {};
+            db.forEach(r => {
+                let id = r.UUID.trim();
                 let m = r.Modalidad ? r.Modalidad.toLowerCase().trim() : "";
                 
                 if (mode === 'overall' || m === mode) {
-                    if (!playersMap[uuid]) {
-                        playersMap[uuid] = { name: r.Jugador, region: r.Region, pts: 0, modes: {}, uuid: uuid };
+                    if (!players[id]) {
+                        players[id] = { ign: r.Jugador, region: r.Region, pts: 0, tiers: {}, uuid: id };
                     }
-                    playersMap[uuid].pts += parseInt(r.Puntos || 0);
-                    playersMap[uuid].modes[m] = r.Tier;
+                    players[id].pts += parseInt(r.Puntos || 0);
+                    players[id].tiers[m] = r.Tier;
                 }
             });
 
-            let sorted = Object.values(playersMap).sort((a, b) => b.pts - a.pts);
-            render(sorted, mode);
+            let sorted = Object.values(players).sort((a, b) => b.pts - a.pts);
+            draw(sorted, mode);
         }
 
-        function render(players, currentMode) {
+        function draw(data, currentMode) {
             const container = document.getElementById('leaderboard');
             container.innerHTML = '';
 
-            players.forEach((p, index) => {
-                let rankColor = (index === 0) ? 'rank-1' : (index === 1) ? 'rank-2' : (index === 2) ? 'rank-3' : 'text-gray-500';
+            data.forEach((p, i) => {
+                let rankStyle = (i === 0) ? 'rank-1' : (i === 1) ? 'rank-2' : (i === 2) ? 'rank-3' : 'text-gray-500';
                 
-                // Si es Bedwars, solo muestra Bedwars. Si es Overall, muestra todo.
-                let modesHtml = '';
-                const displayModes = (currentMode === 'overall') ? ['bedfight', 'bedwars', 'topfight', 'blockfight'] : [currentMode];
+                // Lógica de Tiers: Si estás en Bedwars, solo sale el círculo de Bedwars
+                let circles = '';
+                const activeModes = (currentMode === 'overall') ? ['bedfight', 'bedwars', 'topfight', 'blockfight'] : [currentMode];
                 
-                displayModes.forEach(m => {
+                activeModes.forEach(m => {
                     if(ICONS[m]) {
-                        let tier = p.modes[m] || '-';
-                        modesHtml += `
-                            <div class="mode-circle" style="opacity: ${tier !== '-' ? '1' : '0.2'}">
+                        let t = p.tiers[m] || '-';
+                        circles += `
+                            <div class="mode-circle" style="opacity: ${t !== '-' ? '1' : '0.15'}">
                                 <img src="${ICONS[m]}" class="w-6">
-                                <span class="mode-tier-badge">${tier}</span>
+                                <span class="mode-tier-tag">${t}</span>
                             </div>
                         `;
                     }
@@ -133,16 +129,14 @@
                 container.innerHTML += `
                     <div class="player-card">
                         <div class="flex items-center gap-4">
-                            <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
-                            <img src="https://visage.surgeplay.com/bust/64/${p.uuid}" class="rounded shadow-lg" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
+                            <span class="text-2xl font-black ${rankStyle}">#${i + 1}</span>
+                            <img src="https://visage.surgeplay.com/bust/64/${p.uuid}" class="h-14 w-14" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
                             <div>
-                                <div class="font-bold uppercase italic tracking-tighter">${p.name}</div>
+                                <div class="font-bold uppercase tracking-tight">${p.ign}</div>
                                 <div class="text-[10px] text-blue-400 font-bold">${p.pts} PTS • ${p.region}</div>
                             </div>
                         </div>
-                        <div class="flex items-center">
-                            ${modesHtml}
-                        </div>
+                        <div class="flex">${circles}</div>
                     </div>
                 `;
             });
