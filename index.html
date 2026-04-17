@@ -16,10 +16,15 @@
             transition: all 0.3s ease;
         }
         .player-card:hover {
-            border-color: #ff4d4d; /* Cambio a rojo en hover */
-            box-shadow: 0 0 15px rgba(255, 77, 77, 0.2);
-            transform: scale(1.01);
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
         }
+
+        /* COLORES DE TIERS (Ajusta los colores aquí) */
+        .tier-high { color: #ff4d4d; text-shadow: 0 0 8px rgba(255, 77, 77, 0.4); }
+        .tier-mid { color: #ffcc00; text-shadow: 0 0 8px rgba(255, 204, 0, 0.4); }
+        .tier-low { color: #00ccff; text-shadow: 0 0 8px rgba(0, 204, 255, 0.4); }
 
         .server-block {
             background: #161d2b; border: 1px solid #1f283d;
@@ -45,12 +50,12 @@
 </head>
 <body class="p-6 md:p-12">
 
-    <div id="copy-toast">¡IP Copiada al portapapeles!</div>
+    <div id="copy-toast">¡IP Copiada!</div>
 
     <div class="max-w-5xl mx-auto">
         <div class="flex flex-col md:flex-row items-center justify-between bg-black p-6 rounded-2xl border-2 border-[#ff4d4d] mb-10 gap-6">
             <div class="flex items-center gap-4">
-                <div class="bg-[#ff4d4d] p-4 rounded-lg shadow-lg shadow-red-900/40">
+                <div class="bg-[#ff4d4d] p-4 rounded-lg shadow-lg">
                     <h1 class="text-3xl font-black italic tracking-tighter text-black">ZTEAM</h1>
                 </div>
                 <div>
@@ -60,7 +65,7 @@
             </div>
             
             <a href="https://discord.gg/XG8EpJXuXv" target="_blank" class="transition-transform hover:scale-110">
-                <img src="https://cdn-icons-png.flaticon.com/512/3670/3670157.png" alt="Discord" class="w-14 h-14 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+                <img id="img-discord" src="https://cdn-icons-png.flaticon.com/512/3670/3670157.png" alt="Discord" class="w-14 h-14">
             </a>
         </div>
 
@@ -68,19 +73,19 @@
             <h3 class="text-sm font-black text-gray-500 mb-4 uppercase tracking-[0.2em]">Servidores de Test</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="server-block" onclick="copyIP('mc.hycraft.us')">
-                    <img src="https://i.imgur.com/u7f3RUr.png" class="w-12 mx-auto mb-2" title="Click para copiar">
+                    <img id="img-hycraft" src="https://i.imgur.com/u7f3RUr.png" class="w-12 mx-auto mb-2">
                     <span class="block text-xs font-black">HYCRAFT</span>
                 </div>
                 <div class="server-block" onclick="copyIP('www.hypixel.net')">
-                    <img src="https://i.imgur.com/Gz5oVn6.png" class="w-12 mx-auto mb-2">
+                    <img id="img-hypixel" src="https://i.imgur.com/Gz5oVn6.png" class="w-12 mx-auto mb-2">
                     <span class="block text-xs font-black">HYPIXEL</span>
                 </div>
                 <div class="server-block" onclick="copyIP('ghostly.live')">
-                    <img src="https://i.imgur.com/XF0q6m4.png" class="w-12 mx-auto mb-2">
+                    <img id="img-ghostly" src="https://i.imgur.com/XF0q6m4.png" class="w-12 mx-auto mb-2">
                     <span class="block text-xs font-black">GHOSTLY</span>
                 </div>
                 <div class="server-block" onclick="copyIP('minemen.live')">
-                    <img src="https://i.imgur.com/uS5AosK.png" class="w-12 mx-auto mb-2">
+                    <img id="img-minemen" src="https://i.imgur.com/uS5AosK.png" class="w-12 mx-auto mb-2">
                     <span class="block text-xs font-black">MINEMEN</span>
                 </div>
             </div>
@@ -90,7 +95,23 @@
     </div>
 
     <script>
+        // --- SECCIÓN PARA QUE CAMBIES TUS IMÁGENES ---
+        const IMAGENES = {
+            discord: "https://cdn-icons-png.flaticon.com/512/3670/3670157.png",
+            hycraft: "https://imgur.com/FWfaIjP",
+            hypixel: "https://imgur.com/G4AJ6Lz",
+            ghostly: "https://imgur.com/aAiX0H3",
+            minemen: "https://imgur.com/a/PkvYLwr"
+        };
+
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
+
+        // Aplicar imágenes al cargar
+        document.getElementById('img-discord').src = IMAGENES.discord;
+        document.getElementById('img-hycraft').src = IMAGENES.hycraft;
+        document.getElementById('img-hypixel').src = IMAGENES.hypixel;
+        document.getElementById('img-ghostly').src = IMAGENES.ghostly;
+        document.getElementById('img-minemen').src = IMAGENES.minemen;
 
         function loadData() {
             Papa.parse(CSV_URL, {
@@ -107,7 +128,13 @@
                     players.forEach((p, index) => {
                         let rankColor = index === 0 ? "text-yellow-400" : (index === 1 ? "text-slate-300" : (index === 2 ? "text-orange-400" : "text-gray-500"));
                         
-                        // LIMPIEZA DE UUID: Eliminamos guiones si los tiene en el Excel
+                        // Lógica de colores para los Tiers
+                        let tierClass = "";
+                        let t = p.Tier.toLowerCase();
+                        if (t.includes("high")) tierClass = "tier-high";
+                        else if (t.includes("mid")) tierClass = "tier-mid";
+                        else if (t.includes("low")) tierClass = "tier-low";
+
                         let cleanUUID = p.UUID.replace(/-/g, "").trim();
 
                         container.innerHTML += `
@@ -119,11 +146,11 @@
                                          onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
                                     <div>
                                         <div class="font-black uppercase italic text-lg leading-tight text-gray-100">${p.Jugador}</div>
-                                        <div class="text-[10px] font-black text-[#ff4d4d] tracking-widest">${p.Region} • ${p.Modalidad || 'TEST'}</div>
+                                        <div class="text-[10px] font-black text-gray-500 tracking-widest uppercase">${p.Region} • ${p.Modalidad || 'TEST'}</div>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-white font-black text-lg italic">${p.Tier}</div>
+                                    <div class="font-black text-lg italic ${tierClass}">${p.Tier}</div>
                                     <div class="text-[10px] font-bold text-gray-500">${p.Puntos} PTS</div>
                                 </div>
                             </div>
