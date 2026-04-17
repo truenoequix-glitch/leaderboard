@@ -2,105 +2,136 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>zTeam | Tiers System</title>
+    <title>ZTeam | Leaderboard & Servers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0d111a; color: #fdfdfd; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #0d111a; color: white; font-family: 'Inter', sans-serif; }
         
-        /* Contenedor de la tarjeta */
-        .player-card { 
-            background-color: #161d2b; border: 1px solid #1f283d; 
-            border-radius: 12px; margin-bottom: 25px; height: 95px;
-            display: grid; grid-template-columns: repeat(12, 1fr);
-            align-items: center; position: relative; transition: 0.3s;
+        /* Efecto de brillo en las tarjetas */
+        .player-card {
+            background: #111723; border: 1px solid #1f283d;
+            border-radius: 12px; padding: 15px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        .player-card:hover {
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            transform: scale(1.01);
         }
 
-        .player-card:hover { transform: translateY(-3px); border-color: #3b4b6b; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-
-        /* Pestaña de posición corregida (No amontonada) */
-        .rank-badge { 
-            width: 55px; height: 65px; position: absolute; left: 0; 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: 900; font-style: italic; font-size: 1.6rem; 
-            border-radius: 0 12px 12px 0; box-shadow: 4px 0 15px rgba(0,0,0,0.4);
-            z-index: 10;
+        /* Estilo de los bloques de servidores */
+        .server-block {
+            background: #161d2b; border: 1px solid #1f283d;
+            border-radius: 12px; padding: 15px; text-align: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .server-block:hover {
+            background: #1e293b; border-color: #3b82f6;
+            transform: translateY(-5px);
         }
 
-        /* Colores de podio degradados */
-        .rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #451a03; }
-        .rank-2 { background: linear-gradient(135deg, #94a3b8, #475569); color: #0f172a; }
-        .rank-3 { background: linear-gradient(135deg, #b45309, #78350f); color: #fef3c7; }
-        .rank-default { background: #1e293b; color: #64748b; }
-
-        /* Efecto de brillo blanco al pasar el mouse por el número */
-        .player-card:hover .rank-badge::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transform: skewX(-20deg); animation: shine 0.6s forwards;
+        /* Notificación de copiado */
+        #copy-toast {
+            visibility: hidden; min-width: 200px; background-color: #3b82f6;
+            color: #fff; text-align: center; border-radius: 8px; padding: 12px;
+            position: fixed; z-index: 50; left: 50%; bottom: 30px;
+            transform: translateX(-50%); font-weight: bold;
         }
-        @keyframes shine { 100% { left: 200%; } }
+        #copy-toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 
-        .tier-text { 
-            font-weight: 900; font-size: 2.2rem; font-style: italic;
-            background-clip: text; -webkit-background-clip: text; color: transparent;
-        }
-
-        .region-tag { background: #7f1d1d; color: #f87171; border: 1px solid #991b1b; padding: 4px 12px; border-radius: 6px; font-weight: 800; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
-<body class="p-10">
-    <div class="max-w-6xl mx-auto" id="leaderboard">
+<body class="p-6 md:p-12">
+
+    <div id="copy-toast">¡IP Copiada al portapapeles!</div>
+
+    <div class="max-w-5xl mx-auto">
+        <div class="flex flex-col md:flex-row items-center justify-between bg-[#161d2b] p-6 rounded-2xl border border-[#1f283d] mb-10 gap-6">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 p-3 rounded-lg shadow-lg shadow-blue-900/40">
+                    <h1 class="text-2xl font-black italic tracking-tighter">ZTEAM</h1>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold">Leaderboard Oficial</h2>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Comunidad Competitiva</p>
+                </div>
+            </div>
+            
+            <a href="https://discord.gg/XG8EpJXuXv" target="_blank" class="transition-transform hover:scale-110 active:scale-95">
+                <img src="https://i.ibb.co/wr9vP5H/discord-icon-svg.png" alt="Unirse al Discord" class="w-16 h-16 drop-shadow-[0_0_10px_rgba(88,101,242,0.5)]">
+            </a>
         </div>
 
-    <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
+        <div class="mb-12">
+            <h3 class="text-sm font-black text-gray-500 mb-4 uppercase tracking-[0.2em]">Servidores de Test (Click para copiar IP)</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="server-block" onclick="copyIP('mc.hycraft.us')">
+                    <img src="https://i.ibb.co/F8Sg0zT/White-Wool-JE4-BE2.png" class="w-10 mx-auto mb-2">
+                    <span class="block text-xs font-black">HYCRAFT</span>
+                </div>
+                <div class="server-block" onclick="copyIP('www.hypixel.net')">
+                    <img src="https://i.ibb.co/L58T55Y/Red-Bed-BE.png" class="w-10 mx-auto mb-2">
+                    <span class="block text-xs font-black">HYPIXEL</span>
+                </div>
+                <div class="server-block" onclick="copyIP('ghostly.live')">
+                    <img src="https://i.ibb.co/g3Xp68q/Shears-JE3-BE2.png" class="w-10 mx-auto mb-2">
+                    <span class="block text-xs font-black">GHOSTLY</span>
+                </div>
+                <div class="server-block" onclick="copyIP('minemen.live')">
+                    <img src="https://i.ibb.co/sK67f4M/Wooden-Sword-JE3-BE3.png" class="w-10 mx-auto mb-2">
+                    <span class="block text-xs font-black">MINEMEN</span>
+                </div>
+            </div>
+        </div>
 
-        function getTierGradient(tier) {
-            const t = tier.toUpperCase();
-            if (t.includes('S+')) return 'linear-gradient(#ff4d4d, #990000)';
-            if (t.includes('S')) return 'linear-gradient(#ef4444, #7f1d1d)';
-            if (t.includes('A')) return 'linear-gradient(#fb923c, #9a3412)';
-            if (t.includes('B')) return 'linear-gradient(#4ade80, #14532d)';
-            return 'linear-gradient(#60a5fa, #1e3a8a)';
-        }
+        <h3 class="text-sm font-black text-gray-500 mb-4 uppercase tracking-[0.2em]">Top Jugadores</h3>
+        <div id="leaderboard" class="space-y-3">
+            <div class="text-center py-10 text-gray-600 font-bold italic animate-pulse">Sincronizando con la base de datos...</div>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = 'TU_URL_DE_PUBLICACION_CSV';
 
         function loadData() {
             Papa.parse(CSV_URL, {
-                download: true, header: true,
+                download: true,
+                header: true,
+                skipEmptyLines: true,
                 complete: function(results) {
-                    // Filtrar filas vacías y ORDENAR POR PUNTOS
-                    let players = results.data.filter(p => p.Jugador);
+                    let players = results.data.filter(r => r.UUID);
                     players.sort((a, b) => parseInt(b.Puntos || 0) - parseInt(a.Puntos || 0));
 
                     const container = document.getElementById('leaderboard');
                     container.innerHTML = '';
 
                     players.forEach((p, index) => {
-                        const rank = index + 1;
-                        const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-default';
-                        const tierColor = getTierGradient(p.Tier);
+                        // Colores de podio
+                        let rankColor = "text-gray-500";
+                        if(index === 0) rankColor = "text-yellow-400";
+                        if(index === 1) rankColor = "text-slate-300";
+                        if(index === 2) rankColor = "text-orange-400";
 
                         container.innerHTML += `
                             <div class="player-card">
-                                <div class="rank-badge ${rankClass}">${rank}</div>
-                                
-                                <div class="col-span-7 flex items-center pl-20">
-                                    <img src="https://visage.surgeplay.com/bust/120/${p.UUID}" class="h-24 -mt-8 drop-shadow-2xl">
-                                    <div class="ml-12">
-                                        <h2 class="text-2xl font-black italic uppercase leading-none">${p.Jugador}</h2>
-                                        <p class="text-[11px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">
-                                            <span class="text-amber-500">✦</span> Ace Participant (${p.Puntos} points)
-                                        </p>
+                                <div class="flex items-center gap-5">
+                                    <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
+                                    <img src="https://visage.surgeplay.com/bust/64/${p.UUID.trim()}" 
+                                         class="h-14 w-14 rounded-lg shadow-xl" 
+                                         onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
+                                    <div>
+                                        <div class="font-black uppercase italic text-lg leading-tight tracking-tight text-gray-100">${p.Jugador}</div>
+                                        <div class="text-[10px] font-black text-blue-500 tracking-widest">${p.Region} • ${p.Modalidad || 'OVERALL'}</div>
                                     </div>
                                 </div>
-
-                                <div class="col-span-2 flex justify-center">
-                                    <span class="region-tag uppercase text-xs">${p.Region}</span>
-                                </div>
-
-                                <div class="col-span-3 text-right pr-12">
-                                    <span class="tier-text" style="background-image: ${tierColor}">${p.Tier}</span>
+                                <div class="text-right">
+                                    <div class="text-red-500 font-black text-lg italic leading-none">${p.Tier}</div>
+                                    <div class="text-[10px] font-bold text-gray-500 mt-1">${p.Puntos} PUNTOS</div>
                                 </div>
                             </div>
                         `;
@@ -108,6 +139,14 @@
                 }
             });
         }
+
+        function copyIP(ip) {
+            navigator.clipboard.writeText(ip);
+            var x = document.getElementById("copy-toast");
+            x.className = "show";
+            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+        }
+
         window.onload = loadData;
     </script>
 </body>
