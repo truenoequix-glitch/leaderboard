@@ -2,22 +2,61 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>zTeam | Multi-Leaderboard & Servers</title>
+    <title>zTeam | Leaderboard Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { background-color: #0d111a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
+        /* TARJETA BASE ESTILO COMPETITIVO */
         .player-card {
-            background: #111723; border: 1px solid #1f283d;
-            border-radius: 12px; padding: 15px; margin-bottom: 10px;
+            background: linear-gradient(90deg, #111723 0%, #0f1420 100%); 
+            border: 1px solid #1f283d;
+            border-radius: 8px; margin-bottom: 12px;
             display: flex; align-items: center; justify-content: space-between;
             transition: all 0.3s ease; cursor: pointer;
+            position: relative; overflow: hidden;
+            height: 72px;
         }
-        .player-card:hover { border-color: #ffffff; transform: translateX(5px); }
+        .player-card:hover { border-color: #ff4d4d; transform: translateX(5px); }
 
-        /* ESCALA DE COLORES TIERS */
+        /* EFECTO CORTADO DIAGONAL EN LA POSICIÓN */
+        .rank-badge-zone {
+            height: 100%; width: 140px;
+            display: flex; align-items: center; padding-left: 15px;
+            position: relative; z-index: 2;
+            clip-path: polygon(0 0, 85% 0, 65% 100%, 0% 100%);
+        }
+        /* COLORES DE FONDO SEGÚN RANGO */
+        .bg-top1 { background: linear-gradient(135deg, #e0a910 0%, #8c6603 100%); }
+        .bg-top2 { background: linear-gradient(135deg, #a1a8b8 0%, #5d6370 100%); }
+        .bg-top3 { background: linear-gradient(135deg, #cc6925 0%, #783a11 100%); }
+        .bg-normal-rank { background: linear-gradient(135deg, #1b2436 0%, #131a26 100%); border-right: 2px solid #2d364d; }
+
+        /* TEXTO DE POSICIÓN INTERNA */
+        .rank-num-text { font-size: 1.6rem; font-weight: 900; font-style: italic; letter-spacing: -1px; line-height: 1; margin-right: 8px; }
+
+        /* CONTENEDOR DE LA SKIN DENTRO DE LA POSICIÓN */
+        .avatar-inside-rank {
+            height: 100%; width: 55px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+        }
+        .avatar-inside-rank img { height: 110%; object-fit: contain; transform: translateY(8px); }
+
+        /* ANIMACIÓN DE BRILLO REFLEJO CADA 5 SEGUNDOS (TOP 1, 2, 3) */
+        .podium-glow::after {
+            content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transform: skewX(-25deg);
+            animation: sweepGlow 5s infinite ease-in-out;
+        }
+        @keyframes sweepGlow {
+            0% { left: -150%; }
+            15% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        /* COLORES TIERS */
         .tier-s-plus { color: #ff0000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.6); }
         .tier-s { color: #ff4d4d; }
         .tier-a-plus { color: #ff8c00; }
@@ -25,159 +64,120 @@
         .tier-b-plus { color: #00ff00; }
         .tier-b { color: #5555ff; }
 
-        /* GRADIENTE TOP 1 */
         .top1-name {
-            background: linear-gradient(90deg, #3b82f6, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 900;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;
         }
 
-        /* MODAL */
+        /* MODAL RESPONSIVO */
         #player-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+            display: none; position: fixed; inset: 0; background: rgba(5,7,12,0.9);
+            z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: #111723; border: 1px solid #1f283d; width: 90%; max-width: 450px;
-            padding: 30px; border-radius: 20px; position: relative; text-align: center;
+            background: #0f1422; border: 1px solid #25314a; width: 90%; max-width: 460px;
+            padding: 25px; border-radius: 16px; position: relative; text-align: center;
         }
-
-        /* CÍRCULO DE TIER ÚNICO */
         .tier-circle-single {
-            width: 45px; height: 45px; background: #1a2235; border: 2px solid #2d364d;
+            width: 40px; height: 40px; background: #171f30; border: 2px solid #2b3752;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 1.1rem; margin: 0 auto;
+            font-weight: 900; font-size: 1rem; margin: 0 auto;
         }
-
         .server-block {
-            background: #161d2b; border: 1px solid #1f283d; border-radius: 12px;
-            padding: 15px; text-align: center; cursor: pointer; transition: 0.2s;
+            background: #121824; border: 1px solid #1e293b; border-radius: 8px;
+            padding: 12px; text-align: center; cursor: pointer; transition: 0.2s;
         }
-        .server-block:hover { border-color: #ff4d4d; transform: translateY(-5px); }
-
+        .server-block:hover { border-color: #ff4d4d; transform: translateY(-3px); }
         #copy-toast {
-            visibility: hidden; min-width: 200px; background-color: #ff4d4d;
-            color: #fff; text-align: center; border-radius: 8px; padding: 12px;
-            position: fixed; z-index: 200; left: 50%; bottom: 30px; transform: translateX(-50%);
+            visibility: hidden; min-width: 200px; background-color: #ff4d4d; color: #fff;
+            text-align: center; border-radius: 6px; padding: 10px; position: fixed;
+            z-index: 200; left: 50%; bottom: 30px; transform: translateX(-50%);
         }
         #copy-toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-
-        /* TABLA DE MODALIDADES EN MODAL */
-        .modal-tier-row {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #161d2b; padding: 8px 12px; border-radius: 8px; border: 1px solid #1f283d;
-        }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="p-4 md:p-10 bg-[#070a12]">
 
     <div id="copy-toast">¡IP Copiada!</div>
 
     <div id="player-modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl" onclick="closeModal()">&times;</button>
+            <button class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl font-bold" onclick="closeModal()">&times;</button>
             
-            <img id="m-img" src="" class="w-24 h-24 mx-auto rounded-full border-4 border-yellow-500 mb-4 bg-[#1a2235]">
-            <h2 id="m-name" class="text-3xl font-black italic mb-1"></h2>
+            <img id="m-img" src="" class="w-20 h-20 mx-auto rounded-full border-4 border-yellow-500 mb-3 bg-[#171f30]">
+            <h2 id="m-name" class="text-2xl font-black italic mb-0.5"></h2>
             
-            <div id="m-rank" class="inline-block bg-[#2d364d] text-yellow-400 text-[10px] font-bold px-3 py-1 rounded-full border border-yellow-900/50 mb-2 uppercase tracking-tighter">
+            <div id="m-rank" class="inline-block bg-[#1f293d] text-yellow-400 text-[10px] font-black px-3 py-0.5 rounded mb-1 uppercase tracking-wider">
                 Combat Ace
             </div>
             
-            <p id="m-region" class="text-gray-500 text-sm font-bold mb-4 italic uppercase"></p>
-            
-            <div class="flex justify-center gap-2 mb-6">
-                <a id="m-namemc" href="#" target="_blank" class="bg-[#1a2235] text-[10px] px-4 py-2 rounded border border-gray-700 hover:bg-gray-800 transition inline-block font-bold">
-                    NameMC ↗
-                </a>
-                <a id="m-redes" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-4 py-2 rounded transition inline-block font-bold hidden">
-                    Redes Sociales ↗
-                </a>
+            <p id="m-region" class="text-gray-500 text-xs font-bold mb-4 uppercase"></p>
+
+            <div class="mb-4">
+                <p class="text-[9px] font-black text-gray-500 text-left mb-1.5 tracking-widest uppercase">Redes Sociales</p>
+                <div id="redes-container" class="flex flex-wrap justify-center gap-2 bg-[#121824] p-3 rounded-lg border border-gray-800">
+                    </div>
             </div>
 
             <div class="text-left mb-4">
-                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Posición / Puntuación de la Lista</p>
-                <div class="bg-[#1a2235] p-3 rounded-lg border border-gray-800 flex justify-between items-center">
-                    <span id="m-pos" class="italic font-black text-xl text-yellow-400">#1.</span>
-                    <span class="text-xs font-bold text-gray-300 uppercase italic">🏆 Puntos: <span id="m-elo-text" class="text-white ml-1 font-black"></span></span>
+                <p class="text-[9px] font-black text-gray-500 mb-1.5 tracking-widest uppercase">Posición / Estadísticas actuales</p>
+                <div class="bg-[#171f30] p-2.5 rounded-lg border border-gray-800 flex justify-between items-center">
+                    <span id="m-pos" class="italic font-black text-lg text-yellow-400">#1.</span>
+                    <span class="text-xs font-bold text-gray-300 uppercase italic">🏆 <span id="m-elo-text" class="text-white font-black"></span></span>
                 </div>
             </div>
 
             <div class="text-left">
-                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Tiers por Modalidad</p>
-                <div class="space-y-2 bg-[#1a2235]/50 p-4 rounded-xl border border-gray-800/50">
-                    <div class="modal-tier-row">
-                        <div class="flex items-center gap-2"><img id="m-ico-bf" class="w-6 h-6 rounded"><span class="text-xs font-bold">Bedfight</span></div>
-                        <div class="flex items-center gap-3">
-                            <span id="m-pts-bf" class="text-xs text-gray-400 font-bold">0 PTS</span>
-                            <div id="m-tier-bf" class="tier-circle-single"></div>
-                        </div>
+                <p class="text-[9px] font-black text-gray-500 mb-1.5 tracking-widest uppercase">Tiers del Competidor</p>
+                <div class="space-y-1.5 bg-[#171f30]/40 p-3 rounded-lg border border-gray-800/50">
+                    <div class="flex justify-between items-center bg-[#121824] p-2 rounded border border-gray-800">
+                        <span class="text-xs font-bold text-gray-300">⚔️ Bedfight</span>
+                        <div class="flex items-center gap-2"><span id="m-pts-bf" class="text-[11px] text-gray-400 font-bold">0 PTS</span><div id="m-tier-bf" class="tier-circle-single"></div></div>
                     </div>
-                    <div class="modal-tier-row">
-                        <div class="flex items-center gap-2"><img id="m-ico-rk" class="w-6 h-6 rounded"><span class="text-xs font-bold">Ranked BW</span></div>
-                        <div class="flex items-center gap-3">
-                            <span id="m-pts-rk" class="text-xs text-gray-400 font-bold">0 PTS</span>
-                            <div id="m-tier-rk" class="tier-circle-single"></div>
-                        </div>
+                    <div class="flex justify-between items-center bg-[#121824] p-2 rounded border border-gray-800">
+                        <span class="text-xs font-bold text-gray-300">🏅 Ranked BW</span>
+                        <div class="flex items-center gap-2"><span id="m-pts-rk" class="text-[11px] text-gray-400 font-bold">0 PTS</span><div id="m-tier-rk" class="tier-circle-single"></div></div>
                     </div>
-                    <div class="modal-tier-row">
-                        <div class="flex items-center gap-2"><img id="m-ico-bw" class="w-6 h-6 rounded"><span class="text-xs font-bold">Bedwars</span></div>
-                        <div class="flex items-center gap-3">
-                            <span id="m-pts-bw" class="text-xs text-gray-400 font-bold">0 PTS</span>
-                            <div id="m-tier-bw" class="tier-circle-single"></div>
-                        </div>
+                    <div class="flex justify-between items-center bg-[#121824] p-2 rounded border border-gray-800">
+                        <span class="text-xs font-bold text-gray-300">🛏️ Bedwars</span>
+                        <div class="flex items-center gap-2"><span id="m-pts-bw" class="text-[11px] text-gray-400 font-bold">0 PTS</span><div id="m-tier-bw" class="tier-circle-single"></div></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-5xl mx-auto">
-        <div class="flex flex-col md:flex-row items-center justify-between bg-black p-6 rounded-2xl border-2 border-[#ff4d4d] mb-10 gap-6">
-            <div class="flex items-center gap-4">
-                <div class="bg-[#ff4d4d] p-4 rounded-lg shadow-lg"><h1 class="text-3xl font-black italic tracking-tighter text-black">ZTEAM</h1></div>
+    <div class="max-w-4xl mx-auto">
+        <div class="flex flex-col sm:flex-row items-center justify-between bg-black p-4 rounded-xl border-2 border-[#ff4d4d] mb-8 gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#ff4d4d] p-3 rounded shadow-lg"><h1 class="text-2xl font-black italic tracking-tighter text-black">ZTEAM</h1></div>
                 <div>
-                    <h2 class="text-xl font-bold">Leaderboard Oficial</h2>
-                    <p class="text-xs text-[#ff4d4d] font-black uppercase tracking-widest">Comunidad Competitiva</p>
+                    <h2 class="text-lg font-bold leading-tight">Leaderboard Oficial</h2>
+                    <p class="text-[10px] text-[#ff4d4d] font-black uppercase tracking-widest">Comunidad Competitiva</p>
                 </div>
             </div>
-            <a href="https://discord.gg/XG8EpJXuXv" target="_blank" class="transition-transform hover:scale-110">
-                <img src="https://cdn-icons-png.flaticon.com/512/3670/3670157.png" alt="Discord" class="w-14 h-14">
+            <a href="https://discord.gg/XG8EpJXuXv" target="_blank" class="transition-transform hover:scale-105">
+                <img src="https://cdn-icons-png.flaticon.com/512/3670/3670157.png" alt="Discord" class="w-10 h-10">
             </a>
         </div>
 
-        <div class="mb-12">
-            <h3 class="text-sm font-black text-gray-500 mb-4 uppercase tracking-[0.2em]">Servidores de Test</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="server-block" onclick="copyIP('mc.hycraft.us')"><img src="https://i.postimg.cc/C5J0QhQz/hyc.png" class="w-12 mx-auto mb-2"><span class="block text-xs font-black">HYCRAFT</span></div>
-                <div class="server-block" onclick="copyIP('www.hypixel.net')"><img src="https://i.postimg.cc/sxKzNjN1/hyp.png" class="w-12 mx-auto mb-2"><span class="block text-xs font-black">HYPIXEL</span></div>
-                <div class="server-block" onclick="copyIP('ghostly.live')"><img src="https://i.postimg.cc/Hn3mhYhs/gh.png" class="w-12 mx-auto mb-2"><span class="block text-xs font-black">GHOSTLY</span></div>
-                <div class="server-block" onclick="copyIP('minemen.live')"><img src="https://i.postimg.cc/L5vSb9b5/mmc.png" class="w-12 mx-auto mb-2"><span class="block text-xs font-black">MINEMEN</span></div>
-            </div>
-        </div>
-
         <div class="mb-6">
-            <h3 class="text-sm font-black text-gray-500 mb-3 uppercase tracking-[0.2em]">Seleccionar Leaderboard</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#111723] p-2 rounded-xl border border-gray-800">
-                <button onclick="changeMode('general')" id="btn-general" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black">🌍 General</button>
-                <button onclick="changeMode('bedfight')" id="btn-bedfight" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">⚔️ Bedfight</button>
-                <button onclick="changeMode('ranked')" id="btn-ranked" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🏅 Ranked BW</button>
-                <button onclick="changeMode('bedwars')" id="btn-bedwars" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🛏️ Bedwars</button>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-[#111723] p-1.5 rounded-lg border border-gray-800">
+                <button onclick="changeMode('general')" id="btn-general" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black">🌍 General</button>
+                <button onclick="changeMode('bedfight')" id="btn-bedfight" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">⚔️ Bedfight</button>
+                <button onclick="changeMode('ranked')" id="btn-ranked" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🏅 Ranked BW</button>
+                <button onclick="changeMode('bedwars')" id="btn-bedwars" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🛏️ Bedwars</button>
             </div>
         </div>
 
-        <div id="leaderboard" class="space-y-3"></div>
+        <div id="leaderboard" class="space-y-2.5"></div>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
-
-        const ICON_BEDFIGHT = "https://cdn-icons-png.flaticon.com/512/9312/9312173.png"; 
-        const ICON_RANKED   = "https://cdn-icons-png.flaticon.com/512/3112/3112946.png"; 
-        const ICON_BEDWARS  = "https://cdn-icons-png.flaticon.com/512/2919/2919648.png"; 
+        const DISCORD_INVITE = "https://discord.gg/XG8EpJXuXv";
 
         let globalPlayersData = [];
         let currentMode = 'general';
@@ -196,11 +196,9 @@
             currentMode = mode;
             ['general', 'bedfight', 'ranked', 'bedwars'].forEach(m => {
                 const btn = document.getElementById(`btn-${m}`);
-                if (m === mode) {
-                    btn.className = "py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black";
-                } else {
-                    btn.className = "py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400";
-                }
+                btn.className = (m === mode) 
+                    ? "py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black"
+                    : "py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400";
             });
             renderLeaderboard();
         }
@@ -209,7 +207,6 @@
             Papa.parse(CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    // Normalizar las claves de las columnas para evitar errores de espacios/guiones bajos
                     globalPlayersData = results.data.map(row => {
                         let normalizedRow = {};
                         for (let key in row) {
@@ -228,8 +225,7 @@
             container.innerHTML = '';
 
             let sortedPlayers = globalPlayersData.map(p => {
-                // Buscamos los puntos usando las claves normalizadas (sin espacios ni guiones bajos)
-                let bfPts = parseInt(p.bedfightpuntos || p.puntos || 0);
+                let bfPts = parseInt(p.bedfightpuntos || 0);
                 let rkPts = parseInt(p.rankedpuntos || 0);
                 let bwPts = parseInt(p.bedwarspuntos || 0);
                 
@@ -238,51 +234,63 @@
                 if (isNaN(bwPts)) bwPts = 0;
 
                 let totalPts = bfPts + rkPts + bwPts;
-
                 let targetPts = totalPts;
-                let targetTier = p.tier || "B"; // Tier general por defecto
+                let targetTier = p.tier || "B";
 
-                if (currentMode === 'bedfight') { 
-                    targetPts = bfPts; 
-                    targetTier = p.bedfighttier || "B"; 
-                } else if (currentMode === 'ranked') { 
-                    targetPts = rkPts; 
-                    targetTier = p.rankedtier || "B"; 
-                } else if (currentMode === 'bedwars') { 
-                    targetPts = bwPts; 
-                    targetTier = p.bedwarstier || "B"; 
-                }
+                if (currentMode === 'bedfight') { targetPts = bfPts; targetTier = p.bedfighttier || "B"; }
+                else if (currentMode === 'ranked') { targetPts = rkPts; targetTier = p.rankedtier || "B"; }
+                else if (currentMode === 'bedwars') { targetPts = bwPts; targetTier = p.bedwarstier || "B"; }
 
                 return { ...p, bfPts, rkPts, bwPts, totalPts, targetPts, targetTier };
             });
 
-            // Ordenar de mayor a menor según modalidad seleccionada
             sortedPlayers.sort((a, b) => b.targetPts - a.targetPts);
 
             sortedPlayers.forEach((p, index) => {
-                let rankColor = index === 0 ? "text-yellow-400" : (index === 1 ? "text-slate-300" : (index === 2 ? "text-orange-400" : "text-gray-500"));
-                let tierClass = getTierClass(p.targetTier);
+                let rank = index + 1;
                 let cleanUUID = p.uuid.replace(/-/g, "").trim();
+                let tierClass = getTierClass(p.targetTier);
                 
+                // Zona Cortada Dinámica segun el Podio
+                let rankZoneClass = "bg-normal-rank";
+                let podiumCardClass = "";
+                if (rank === 1) { rankZoneClass = "bg-top1"; podiumCardClass = "podium-glow border-yellow-600/60"; }
+                else if (rank === 2) { rankZoneClass = "bg-top2"; podiumCardClass = "podium-glow border-slate-500/60"; }
+                else if (rank === 3) { rankZoneClass = "bg-top3"; podiumCardClass = "podium-glow border-amber-800/60"; }
+
+                let rankNumColor = rank === 1 ? "text-yellow-100" : (rank === 2 ? "text-slate-100" : (rank === 3 ? "text-orange-100" : "text-gray-400"));
+                let pString = encodeURIComponent(JSON.stringify(p));
+
                 let rankTitle = "Combat Ace";
                 if(p.targetPts >= 100) rankTitle = "Combat Master";
                 if(p.targetPts >= 550) rankTitle = "Combat Sorcerer";
 
-                let pString = encodeURIComponent(JSON.stringify(p));
-
                 container.innerHTML += `
-                    <div class="player-card" onclick="openModal('${pString}', '${index+1}', '${rankTitle}')">
-                        <div class="flex items-center gap-5">
-                            <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
-                            <img src="https://visage.surgeplay.com/bust/64/${cleanUUID}" class="h-14 w-14 rounded-lg bg-[#1a2235]" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
-                            <div>
-                                <div class="font-black uppercase italic text-lg leading-tight ${index === 0 ? 'top1-name' : 'text-gray-100'}">${p.jugador}</div>
-                                <div class="text-[10px] font-black text-gray-500 tracking-widest uppercase">${p.region || 'NA'}</div>
+                    <div class="player-card ${podiumCardClass}" onclick="openModal('${pString}', '${rank}', '${rankTitle}')">
+                        <div class="flex items-center h-100 h-full">
+                            <div class="rank-badge-zone ${rankZoneClass}">
+                                <span class="rank-num-text ${rankNumColor}">${rank}.</span>
+                                <div class="avatar-inside-rank">
+                                    <img src="https://visage.surgeplay.com/bust/64/${cleanUUID}" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
+                                </div>
+                            </div>
+                            
+                            <div class="ml-4">
+                                <div class="font-black uppercase italic text-md md:text-lg leading-tight ${rank === 1 ? 'top1-name' : 'text-gray-100'}">${p.jugador}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-[#1f293d] text-gray-400 text-[8px] font-bold px-1.5 rounded uppercase tracking-wider">${p.region || 'NA'}</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <div class="font-black text-xl italic ${tierClass}">${p.targetTier}</div>
-                            <div class="text-[10px] font-bold text-gray-400 uppercase">${p.targetPts} PTS</div>
+
+                        <div class="text-right pr-4 flex items-center gap-6">
+                            <div class="hidden md:block">
+                                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Puntuación</p>
+                                <p class="text-sm font-black text-white">${p.targetPts} PTS</p>
+                            </div>
+                            <div class="text-center min-w-[45px]">
+                                <div class="font-black text-xl italic tracking-tighter ${tierClass}">${p.targetTier}</div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -294,38 +302,50 @@
             let cleanUUID = p.uuid.replace(/-/g, "").trim();
 
             document.getElementById('m-name').innerText = p.jugador;
-            document.getElementById('m-name').className = (pos == 1) ? "text-3xl italic top1-name" : "text-3xl font-black italic text-white";
+            document.getElementById('m-name').className = (pos == 1) ? "text-2xl italic top1-name" : "text-2xl font-black italic text-white";
             document.getElementById('m-img').src = `https://visage.surgeplay.com/bust/128/${cleanUUID}`;
-            document.getElementById('m-region').innerText = p.region || 'NA';
+            document.getElementById('m-region').innerText = `Región Oficial: ${p.region || 'NA'}`;
             
-            // Texto descriptivo del puntaje actual visto
-            let modoTexto = currentMode === 'general' ? 'Total' : currentMode.toUpperCase();
-            document.getElementById('m-elo-text').innerText = `${p.targetPts} (${modoTexto})`;
-            
-            document.getElementById('m-pos').innerText = `#${pos}`;
+            let modeLabel = currentMode === 'general' ? 'Puntos Totales' : `Puntos en ${currentMode.toUpperCase()}`;
+            document.getElementById('m-elo-text').innerText = `${p.targetPts} ${modeLabel}`;
+            document.getElementById('m-pos').innerText = `#${pos} en Ranking`;
             document.getElementById('m-rank').innerText = rankTitle;
             document.getElementById('m-namemc').href = `https://namemc.com/profile/${p.jugador}`;
             
-            // Redes Sociales Opcionales
-            const redBtn = document.getElementById('m-redes');
-            if (p.redes && p.redes.trim() !== "") {
-                redBtn.href = p.redes.trim();
-                redBtn.classList.remove('hidden');
-            } else {
-                redBtn.classList.add('hidden');
+            // PROCESAMIENTO DINÁMICO DE REDES SOCIALES
+            const redesContainer = document.getElementById('redes-container');
+            redesContainer.innerHTML = '';
+            let tieneAlgunaRed = false;
+
+            const agregarBotonRed = (url, texto, bgColor) => {
+                if (url && url.trim() !== "") {
+                    tieneAlgunaRed = true;
+                    redesContainer.innerHTML += `
+                        <a href="${url.trim()}" target="_blank" class="${bgColor} hover:opacity-90 text-white text-[10px] px-3 py-1.5 rounded transition font-black tracking-wider uppercase">
+                            ${texto} ↗
+                        </a>
+                    `;
+                }
+            };
+
+            agregarBotonRed(p.tiktok, 'TikTok', 'bg-gradient-to-r from-pink-500 to-cyan-500');
+            agregarBotonRed(p.instagram, 'Instagram', 'bg-gradient-to-r from-purple-600 to-pink-500');
+            agregarBotonRed(p.redes, 'Otras Redes', 'bg-blue-600');
+
+            // Si no tiene ninguna red registrada en el Excel, añade el botón por defecto de Discord
+            if (!tieneAlgunaRed) {
+                redesContainer.innerHTML = `
+                    <a href="${DISCORD_INVITE}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] px-4 py-2 w-full rounded text-center transition font-black tracking-wide uppercase">
+                        👾 Agregar en Discord
+                    </a>
+                `;
             }
 
-            // Asignar los iconos configurados
-            document.getElementById('m-ico-bf').src = ICON_BEDFIGHT;
-            document.getElementById('m-ico-rk').src = ICON_RANKED;
-            document.getElementById('m-ico-bw').src = ICON_BEDWARS;
-
-            // Mostrar los puntos desglosados en el Modal de forma clara
+            // Actualizar desgloses de Tiers y Puntos internos del Modal
             document.getElementById('m-pts-bf').innerText = `${p.bfPts} PTS`;
             document.getElementById('m-pts-rk').innerText = `${p.rkPts} PTS`;
             document.getElementById('m-pts-bw').innerText = `${p.bwPts} PTS`;
 
-            // Círculos de Tiers individuales en el Modal
             setModalTierCircle('m-tier-bf', p.bedfighttier || 'B');
             setModalTierCircle('m-tier-rk', p.rankedtier || 'B');
             setModalTierCircle('m-tier-bw', p.bedwarstier || 'B');
