@@ -7,12 +7,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0d111a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background-color: #090d16; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
         /* TARJETA DE JUGADOR PRINCIPAL */
         .player-card {
-            background: linear-gradient(90deg, #111723 0%, #0f1420 100%); 
-            border: 1px solid #1f283d; border-radius: 8px; margin-bottom: 10px;
+            background: linear-gradient(90deg, #0f1422 0%, #0b0f19 100%); 
+            border: 1px solid #172030; border-radius: 8px; margin-bottom: 10px;
             display: flex; align-items: center; justify-content: space-between;
             transition: all 0.25s ease; cursor: pointer;
             position: relative; overflow: hidden; height: 72px;
@@ -27,8 +27,8 @@
         .bg-top1 { background: linear-gradient(135deg, #e0a910 0%, #8c6603 100%); }
         .bg-top2 { background: linear-gradient(135deg, #a1a8b8 0%, #5d6370 100%); }
         .bg-top3 { background: linear-gradient(135deg, #cc6925 0%, #783a11 100%); }
-        .bg-normal-rank { background: linear-gradient(135deg, #1b2436 0%, #131a26 100%); border-right: 2px solid #2d364d; }
-        .rank-num-text { font-size: 1.5rem; font-weight: 900; font-style: italic; letter-spacing: -1px; }
+        .bg-normal-rank { background: linear-gradient(135deg, #161f30 0%, #0f1522 100%); border-right: 2px solid #222d42; }
+        .rank-num-text { font-size: 1.6rem; font-weight: 900; font-style: italic; letter-spacing: -1px; }
 
         .avatar-inside-rank { height: 100%; width: 55px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
         .avatar-inside-rank img { height: 115%; object-fit: contain; transform: translateY(8px); }
@@ -42,23 +42,27 @@
         @keyframes sweepGlow { 0% { left: -150%; } 12% { left: 150%; } 100% { left: 150%; } }
 
         /* CIRCULOS DE TIERS MINIATURA (LISTA PRINCIPAL) */
-        .tier-mini-badge { display: flex; flex-direction: column; align-items: center; width: 42px; }
+        .tier-mini-badge { display: flex; flex-direction: column; align-items: center; width: 45px; }
         .tier-circle-icon {
-            width: 34px; height: 34px; background: #171f30; border: 2px solid #2b3752;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; p: 4px; overflow: hidden;
+            width: 36px; height: 36px; background: #121824; border: 2px solid #222e45;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 5px; overflow: hidden;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
         }
-        .tier-circle-icon img { width: 100%; height: 100%; object-fit: cover; }
-        .tier-label-sub { font-size: 9px; font-weight: 900; margin-top: 2px; text-transform: uppercase; text-align: center; }
+        .tier-circle-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .tier-label-sub { font-size: 10px; font-weight: 900; margin-top: 3px; text-transform: uppercase; text-align: center; text-shadow: 0px 1px 3px rgba(0,0,0,0.8); }
 
-        /* ESTILOS DE COLORES PARA COLUMNAS DE TIERS */
-        .tier-ht3 { color: #ff6633; }
-        .tier-ht1 { color: #ffcc00; }
-        .tier-lt2 { color: #8ba2bd; }
-        .tier-none { color: #4b5563; }
+        /* ESTILOS DE COLORES S+, S, A+ DE MCTIERS */
+        .tier-s-plus { color: #ffcc00; text-shadow: 0 0 6px rgba(255,204,0,0.4); }
+        .tier-s { color: #ffaa00; }
+        .tier-a-plus { color: #ff5555; text-shadow: 0 0 6px rgba(255,85,85,0.4); }
+        .tier-a { color: #ff3333; }
+        .tier-b-plus { color: #ff55ff; }
+        .tier-b { color: #aa00aa; }
+        .tier-none { color: #555555; }
 
         /* CAJAS DE DISEÑO CORTADO DENTRO DEL MODAL */
         .modal-position-box {
-            background: #171f30; border: 1px solid #25314a; border-radius: 6px;
+            background: #121824; border: 1px solid #1f2a3f; border-radius: 6px;
             display: flex; align-items: center; overflow: hidden; height: 44px; margin-bottom: 8px;
         }
         .modal-position-left {
@@ -69,21 +73,19 @@
 
         /* MODAL */
         #player-modal {
-            display: none; position: fixed; inset: 0; background: rgba(5,7,12,0.94);
+            display: none; position: fixed; inset: 0; background: rgba(4,6,10,0.95);
             z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: #0f1422; border: 1px solid #25314a; width: 95%; max-width: 430px;
+            background: #0b0f19; border: 1px solid #1f2a3f; width: 95%; max-width: 410px;
             padding: 24px; border-radius: 16px; position: relative; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
         }
         
-        /* Ocultar barra de scroll del modal */
         .modal-content::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
-<body class="p-4 md:p-10 bg-[#070a12]">
-
-    <div id="copy-toast">¡IP Copiada!</div>
+<body class="p-4 md:p-10 bg-[#05070c]">
 
     <div id="player-modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -91,7 +93,7 @@
             
             <div class="text-center mb-5">
                 <div class="relative inline-block mb-2">
-                    <img id="m-img" src="" class="w-20 h-20 rounded-full border-2 border-yellow-500/80 p-0.5 bg-[#171f30]">
+                    <img id="m-img" src="" class="w-20 h-20 rounded-full border-2 border-yellow-500/80 p-0.5 bg-[#121824]">
                 </div>
                 <h2 id="m-name" class="text-2xl font-black tracking-tight text-white mb-0.5"></h2>
                 <div id="m-rank" class="inline-flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
@@ -101,13 +103,13 @@
             </div>
 
             <div class="mb-5">
-                <p class="text-[9px] font-black text-gray-500 mb-1.5 tracking-widest uppercase">Perfiles Sociales</p>
-                <div id="redes-container" class="grid grid-cols-3 gap-2">
-                    </div>
+                <p class="text-[9px] font-black text-gray-400 mb-1.5 tracking-widest uppercase">Perfiles Sociales</p>
+                <div id="redes-container" class="grid grid-cols-2 gap-2">
+                </div>
             </div>
 
             <div class="mb-2">
-                <p class="text-[9px] font-black text-gray-500 mb-2 tracking-widest uppercase">Estadísticas por Modalidad</p>
+                <p class="text-[9px] font-black text-gray-400 mb-2 tracking-widest uppercase">Estadísticas por Modalidad</p>
                 
                 <div class="modal-position-box">
                     <div id="m-box-bg-gen" class="modal-position-left text-black bg-[#e0a910]">
@@ -168,7 +170,7 @@
         </div>
 
         <div class="mb-6">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-[#111723] p-1.5 rounded-lg border border-gray-800">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-[#0f1422] p-1.5 rounded-lg border border-gray-800">
                 <button onclick="changeMode('general')" id="btn-general" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black">🌍 General</button>
                 <button onclick="changeMode('bedfight')" id="btn-bedfight" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">⚔️ Bedfight</button>
                 <button onclick="changeMode('ranked')" id="btn-ranked" class="py-2 px-3 rounded text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🏅 Ranked BW</button>
@@ -183,23 +185,27 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
         const DISCORD_INVITE = "https://discord.gg/XG8EpJXuXv";
 
-        // ENLACES DIRECTOS PROPORCIONADOS POR EL USUARIO
-        const LOGO_TIKTOK = "https://i.ibb.co/VWTg69wG/tiktok.png";
-        const LOGO_INSTAGRAM = "https://i.ibb.co/6R4ZgpyQ/instagram.png";
+        // ENLACES CORREGIDOS Y OPERATIVOS DE ICONOS
+        const LOGO_TIKTOK = "https://i.ibb.co/WvmnHT5b/tiktok.png";
+        const LOGO_INSTAGRAM = "https://i.ibb.co/fwmqzp3/instagram.png";
         const LOGO_BEDFIGHT = "https://i.ibb.co/M5yGmfXd/bedfight.png";
         const LOGO_BEDWARS = "https://i.ibb.co/YFrcLPKp/bedwars.png";
-        const LOGO_RBW = "https://images.builder.codes/raw/ender_icon.png"; // Predeterminado para Ranked
+        const LOGO_RBW = "https://i.ibb.co/9V3Z4P6/rankedbw.png"; // Icono pulido de medalla competitiva para RBW
 
         let globalPlayersData = [];
         let currentMode = 'general';
 
+        // ASIGNACIÓN CORRECTA DE COLORES DE LA PALETA MCTIERS
         function getTierStyleClass(tier) {
             if (!tier || tier.trim() === "" || tier.trim() === "-") return "tier-none";
             let t = tier.trim().toUpperCase();
-            if (t.includes("HT3")) return "tier-ht3";
-            if (t.includes("HT1")) return "tier-ht1";
-            if (t.includes("LT2")) return "tier-lt2";
-            return "tier-ht1";
+            if (t.includes("S+")) return "tier-s-plus";
+            if (t.includes("S")) return "tier-s";
+            if (t.includes("A+")) return "tier-a-plus";
+            if (t.includes("A")) return "tier-a";
+            if (t.includes("B+")) return "tier-b-plus";
+            if (t.includes("B")) return "tier-b";
+            return "tier-none";
         }
 
         function changeMode(mode) {
@@ -230,7 +236,6 @@
             });
         }
 
-        // Función para calcular posiciones dinámicas en todas las modalidades
         function getRankOfPlayer(playerUUID, mode) {
             let list = globalPlayersData.map(p => {
                 let pts = 0;
@@ -288,7 +293,6 @@
                 if(p.targetPts >= 250) rankTitle = "Combat Master";
                 if(p.targetPts >= 500) rankTitle = "Combat Sorcerer";
 
-                // ESTILOS DE TIERS INDIVIDUALES O VACÍOS
                 let classBf = getTierStyleClass(p.bedfighttier);
                 let classRk = getTierStyleClass(p.rankedtier);
                 let classBw = getTierStyleClass(p.bedwarstier);
@@ -301,7 +305,7 @@
                     <div class="player-card ${podiumCardClass}" onclick="openModal('${pString}', '${cleanUUID}', '${rankTitle}')">
                         <div class="flex items-center h-full">
                             <div class="rank-badge-zone ${rankZoneClass}">
-                                <span class="rank-num-text ${rankNumColor}">${rank}</span>
+                                <span class="rank-num-text ${rankNumColor}">${rank}.</span>
                                 <div class="avatar-inside-rank">
                                     <img src="https://visage.surgeplay.com/bust/64/${cleanUUID}" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
                                 </div>
@@ -341,22 +345,19 @@
 
             document.getElementById('m-name').innerText = p.jugador;
             document.getElementById('m-img').src = `https://visage.surgeplay.com/bust/128/${cleanUUID}`;
-            document.getElementById('m-region').innerText = `Region: ${p.region || 'North America'}`;
+            document.getElementById('m-region').innerText = `Region: ${p.region || 'EU'}`;
             document.getElementById('m-rank').innerText = `⭐ ${rankTitle}`;
 
-            // CALCULAR POSICIONES EN TIEMPO REAL PARA EL DESGLOSE COMPLETO DEL MODAL
             let posGen = getRankOfPlayer(p.uuid, 'general');
             let posBf = getRankOfPlayer(p.uuid, 'bedfight');
             let posRk = getRankOfPlayer(p.uuid, 'ranked');
             let posBw = getRankOfPlayer(p.uuid, 'bedwars');
 
-            // ASIGNAR NUMERACIONES A LAS CAJAS DIAGONALES DEL MODAL
             document.getElementById('m-pos-gen').innerText = `${posGen}.`;
             document.getElementById('m-pos-bf').innerText = `${posBf}.`;
             document.getElementById('m-pos-rk').innerText = `${posRk}.`;
             document.getElementById('m-pos-bw').innerText = `${posBw}.`;
 
-            // ASIGNAR ELOS Y TIERS CORRESPONDIENTES A LAS CAJAS
             let tierGenLabel = (p.tier && p.tier.trim() !== "") ? p.tier : "-";
             let tierBfLabel = (p.bedfighttier && p.bedfighttier.trim() !== "") ? p.bedfighttier : "-";
             let tierRkLabel = (p.rankedtier && p.rankedtier.trim() !== "") ? p.rankedtier : "-";
@@ -367,14 +368,13 @@
             document.getElementById('m-elo-rk').innerText = `${tierRkLabel} (${p.rkPts || 0} points)`;
             document.getElementById('m-elo-bw').innerText = `${tierBwLabel} (${p.bwPts || 0} points)`;
 
-            // DINÁMICA DE COLOR DE ACUERDO AL PODIO GENERAL DE LA CAJA PRINCIPAL DE MODAL
             const boxGen = document.getElementById('m-box-bg-gen');
             if(posGen == 1) boxGen.className = "modal-position-left text-black bg-[#e0a910]";
             else if(posGen == 2) boxGen.className = "modal-position-left text-black bg-[#a1a8b8]";
             else if(posGen == 3) boxGen.className = "modal-position-left text-white bg-[#cc6925]";
             else boxGen.className = "modal-position-left text-gray-300 bg-[#1f293d]";
 
-            // LOGICA REESTRUCTURADA PARA BOTONES SOCIALES PERSONALIZADOS
+            // LOGICA REESTRUCTURADA PARA REDES EN FORMATO "GRID COLUMNS"
             const redesContainer = document.getElementById('redes-container');
             redesContainer.innerHTML = '';
             let contadorRedes = 0;
@@ -383,8 +383,8 @@
                 if (url && url.trim() !== "") {
                     contadorRedes++;
                     return `
-                        <a href="${url.trim()}" target="_blank" class="bg-[#171f30] hover:bg-[#1e2940] border border-gray-800 text-gray-300 text-[10px] font-bold py-2 px-1 rounded flex items-center justify-center gap-1.5 transition block truncate">
-                            <img src="${iconUrl}" class="w-3.5 h-3.5 object-contain"> ${plataforma}
+                        <a href="${url.trim()}" target="_blank" class="bg-[#121824] hover:bg-[#192233] border border-gray-800 text-gray-300 text-[11px] font-bold py-2 px-2 rounded flex items-center justify-center gap-2 transition block truncate">
+                            <img src="${iconUrl}" class="w-4 h-4 object-contain"> ${plataforma}
                         </a>`;
                 }
                 return '';
@@ -397,12 +397,12 @@
             if (contadorRedes === 0) {
                 redesContainer.className = "block text-center";
                 redesContainer.innerHTML = `
-                    <a href="${DISCORD_INVITE}" target="_blank" class="bg-[#1f293d] border border-dashed border-gray-700 hover:border-gray-500 text-gray-400 text-[11px] font-black py-2.5 px-4 rounded w-full block transition uppercase tracking-wider">
+                    <a href="${DISCORD_INVITE}" target="_blank" class="bg-[#162030] border border-dashed border-gray-700 hover:border-gray-500 text-gray-400 text-[11px] font-black py-2.5 px-4 rounded w-full block transition uppercase tracking-wider">
                          💬 Agregar en Discord
                     </a>
                 `;
             } else {
-                redesContainer.className = "grid grid-cols-3 gap-2";
+                redesContainer.className = `grid grid-cols-${contadorRedes > 1 ? 2 : 1} gap-2`;
             }
 
             document.getElementById('player-modal').style.display = 'flex';
