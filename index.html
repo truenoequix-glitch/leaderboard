@@ -99,10 +99,10 @@
             </div>
 
             <div class="text-left mb-4">
-                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Posición Global / Puntuación</p>
+                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Posición / Puntuación de la Lista</p>
                 <div class="bg-[#1a2235] p-3 rounded-lg border border-gray-800 flex justify-between items-center">
                     <span id="m-pos" class="italic font-black text-xl text-yellow-400">#1.</span>
-                    <span class="text-xs font-bold text-gray-300 uppercase italic">🏆 Total <span id="m-elo-text" class="text-gray-500 ml-1"></span></span>
+                    <span class="text-xs font-bold text-gray-300 uppercase italic">🏆 Puntos: <span id="m-elo-text" class="text-white ml-1 font-black"></span></span>
                 </div>
             </div>
 
@@ -111,15 +111,24 @@
                 <div class="space-y-2 bg-[#1a2235]/50 p-4 rounded-xl border border-gray-800/50">
                     <div class="modal-tier-row">
                         <div class="flex items-center gap-2"><img id="m-ico-bf" class="w-6 h-6 rounded"><span class="text-xs font-bold">Bedfight</span></div>
-                        <div id="m-tier-bf" class="tier-circle-single"></div>
+                        <div class="flex items-center gap-3">
+                            <span id="m-pts-bf" class="text-xs text-gray-400 font-bold">0 PTS</span>
+                            <div id="m-tier-bf" class="tier-circle-single"></div>
+                        </div>
                     </div>
                     <div class="modal-tier-row">
                         <div class="flex items-center gap-2"><img id="m-ico-rk" class="w-6 h-6 rounded"><span class="text-xs font-bold">Ranked BW</span></div>
-                        <div id="m-tier-rk" class="tier-circle-single"></div>
+                        <div class="flex items-center gap-3">
+                            <span id="m-pts-rk" class="text-xs text-gray-400 font-bold">0 PTS</span>
+                            <div id="m-tier-rk" class="tier-circle-single"></div>
+                        </div>
                     </div>
                     <div class="modal-tier-row">
                         <div class="flex items-center gap-2"><img id="m-ico-bw" class="w-6 h-6 rounded"><span class="text-xs font-bold">Bedwars</span></div>
-                        <div id="m-tier-bw" class="tier-circle-single"></div>
+                        <div class="flex items-center gap-3">
+                            <span id="m-pts-bw" class="text-xs text-gray-400 font-bold">0 PTS</span>
+                            <div id="m-tier-bw" class="tier-circle-single"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -164,16 +173,14 @@
     </div>
 
     <script>
-        // URL de tu hoja de cálculo publicada en formato CSV
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
 
-        // ENLACES MODIFICABLES PARA LOS ICONOS DE LAS MODALIDADES
         const ICON_BEDFIGHT = "https://cdn-icons-png.flaticon.com/512/9312/9312173.png"; 
         const ICON_RANKED   = "https://cdn-icons-png.flaticon.com/512/3112/3112946.png"; 
         const ICON_BEDWARS  = "https://cdn-icons-png.flaticon.com/512/2919/2919648.png"; 
 
         let globalPlayersData = [];
-        let currentMode = 'general'; // Modos: general, bedfight, ranked, bedwars
+        let currentMode = 'general';
 
         function getTierClass(tier) {
             let t = tier ? tier.trim().toUpperCase() : "B";
@@ -202,7 +209,15 @@
             Papa.parse(CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    globalPlayersData = results.data.filter(r => r.UUID);
+                    // Normalizar las claves de las columnas para evitar errores de espacios/guiones bajos
+                    globalPlayersData = results.data.map(row => {
+                        let normalizedRow = {};
+                        for (let key in row) {
+                            let cleanKey = key.trim().toLowerCase().replace(/[\s_]/g, '');
+                            normalizedRow[cleanKey] = row[key];
+                        }
+                        return normalizedRow;
+                    }).filter(r => r.uuid);
                     renderLeaderboard();
                 }
             });
@@ -212,36 +227,47 @@
             const container = document.getElementById('leaderboard');
             container.innerHTML = '';
 
-            // Estructuramos y limpiamos las puntuaciones individuales
             let sortedPlayers = globalPlayersData.map(p => {
-                let bfPts = parseInt(p.Bedfight_Puntos || p.Puntos || 0); // fallback por si acaso
-                let rkPts = parseInt(p.Ranked_Puntos || 0);
-                let bwPts = parseInt(p.Bedwars_Puntos || 0);
+                // Buscamos los puntos usando las claves normalizadas (sin espacios ni guiones bajos)
+                let bfPts = parseInt(p.bedfightpuntos || p.puntos || 0);
+                let rkPts = parseInt(p.rankedpuntos || 0);
+                let bwPts = parseInt(p.bedwarspuntos || 0);
+                
+                if (isNaN(bfPts)) bfPts = 0;
+                if (isNaN(rkPts)) rkPts = 0;
+                if (isNaN(bwPts)) bwPts = 0;
+
                 let totalPts = bfPts + rkPts + bwPts;
 
                 let targetPts = totalPts;
-                let targetTier = p.Tier || "B";
+                let targetTier = p.tier || "B"; // Tier general por defecto
 
-                if (currentMode === 'bedfight') { targetPts = bfPts; targetTier = p.Bedfight_Tier || "B"; }
-                else if (currentMode === 'ranked') { targetPts = rkPts; targetTier = p.Ranked_Tier || "B"; }
-                else if (currentMode === 'bedwars') { targetPts = bwPts; targetTier = p.Bedwars_Tier || "B"; }
+                if (currentMode === 'bedfight') { 
+                    targetPts = bfPts; 
+                    targetTier = p.bedfighttier || "B"; 
+                } else if (currentMode === 'ranked') { 
+                    targetPts = rkPts; 
+                    targetTier = p.rankedtier || "B"; 
+                } else if (currentMode === 'bedwars') { 
+                    targetPts = bwPts; 
+                    targetTier = p.bedwarstier || "B"; 
+                }
 
                 return { ...p, bfPts, rkPts, bwPts, totalPts, targetPts, targetTier };
             });
 
-            // Ordenar de mayor a menor puntuación según el filtro seleccionado
+            // Ordenar de mayor a menor según modalidad seleccionada
             sortedPlayers.sort((a, b) => b.targetPts - a.targetPts);
 
             sortedPlayers.forEach((p, index) => {
                 let rankColor = index === 0 ? "text-yellow-400" : (index === 1 ? "text-slate-300" : (index === 2 ? "text-orange-400" : "text-gray-500"));
                 let tierClass = getTierClass(p.targetTier);
-                let cleanUUID = p.UUID.replace(/-/g, "").trim();
+                let cleanUUID = p.uuid.replace(/-/g, "").trim();
                 
                 let rankTitle = "Combat Ace";
                 if(p.targetPts >= 100) rankTitle = "Combat Master";
                 if(p.targetPts >= 550) rankTitle = "Combat Sorcerer";
 
-                // Guardamos el Objeto serializado para pasarlo al Modal de forma íntegra
                 let pString = encodeURIComponent(JSON.stringify(p));
 
                 container.innerHTML += `
@@ -250,8 +276,8 @@
                             <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
                             <img src="https://visage.surgeplay.com/bust/64/${cleanUUID}" class="h-14 w-14 rounded-lg bg-[#1a2235]" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
                             <div>
-                                <div class="font-black uppercase italic text-lg leading-tight ${index === 0 ? 'top1-name' : 'text-gray-100'}">${p.Jugador}</div>
-                                <div class="text-[10px] font-black text-gray-500 tracking-widest uppercase">${p.Region}</div>
+                                <div class="font-black uppercase italic text-lg leading-tight ${index === 0 ? 'top1-name' : 'text-gray-100'}">${p.jugador}</div>
+                                <div class="text-[10px] font-black text-gray-500 tracking-widest uppercase">${p.region || 'NA'}</div>
                             </div>
                         </div>
                         <div class="text-right">
@@ -265,35 +291,44 @@
 
         function openModal(playerDataStr, pos, rankTitle) {
             const p = JSON.parse(decodeURIComponent(playerDataStr));
-            let cleanUUID = p.UUID.replace(/-/g, "").trim();
+            let cleanUUID = p.uuid.replace(/-/g, "").trim();
 
-            document.getElementById('m-name').innerText = p.Jugador;
+            document.getElementById('m-name').innerText = p.jugador;
             document.getElementById('m-name').className = (pos == 1) ? "text-3xl italic top1-name" : "text-3xl font-black italic text-white";
             document.getElementById('m-img').src = `https://visage.surgeplay.com/bust/128/${cleanUUID}`;
-            document.getElementById('m-region').innerText = p.Region;
-            document.getElementById('m-elo-text').innerText = `(${p.targetPts} pts listado)`;
-            document.getElementById('m-pos').innerText = `#${pos}.`;
-            document.getElementById('m-rank').innerText = rankTitle;
-            document.getElementById('m-namemc').href = `https://namemc.com/profile/${p.Jugador}`;
+            document.getElementById('m-region').innerText = p.region || 'NA';
             
-            // Redes Sociales Dinámicas (Fila opcional)
+            // Texto descriptivo del puntaje actual visto
+            let modoTexto = currentMode === 'general' ? 'Total' : currentMode.toUpperCase();
+            document.getElementById('m-elo-text').innerText = `${p.targetPts} (${modoTexto})`;
+            
+            document.getElementById('m-pos').innerText = `#${pos}`;
+            document.getElementById('m-rank').innerText = rankTitle;
+            document.getElementById('m-namemc').href = `https://namemc.com/profile/${p.jugador}`;
+            
+            // Redes Sociales Opcionales
             const redBtn = document.getElementById('m-redes');
-            if (p.Redes && p.Redes.trim() !== "") {
-                redBtn.href = p.Redes.trim();
+            if (p.redes && p.redes.trim() !== "") {
+                redBtn.href = p.redes.trim();
                 redBtn.classList.remove('hidden');
             } else {
                 redBtn.classList.add('hidden');
             }
 
-            // Actualizar Iconos de Modalidades desde las variables asignadas arriba
+            // Asignar los iconos configurados
             document.getElementById('m-ico-bf').src = ICON_BEDFIGHT;
             document.getElementById('m-ico-rk').src = ICON_RANKED;
             document.getElementById('m-ico-bw').src = ICON_BEDWARS;
 
-            // Renderizar los círculos de Tiers internos
-            setModalTierCircle('m-tier-bf', p.Bedfight_Tier || p.Tier || 'B');
-            setModalTierCircle('m-tier-rk', p.Ranked_Tier || 'B');
-            setModalTierCircle('m-tier-bw', p.Bedwars_Tier || 'B');
+            // Mostrar los puntos desglosados en el Modal de forma clara
+            document.getElementById('m-pts-bf').innerText = `${p.bfPts} PTS`;
+            document.getElementById('m-pts-rk').innerText = `${p.rkPts} PTS`;
+            document.getElementById('m-pts-bw').innerText = `${p.bwPts} PTS`;
+
+            // Círculos de Tiers individuales en el Modal
+            setModalTierCircle('m-tier-bf', p.bedfighttier || 'B');
+            setModalTierCircle('m-tier-rk', p.rankedtier || 'B');
+            setModalTierCircle('m-tier-bw', p.bedwarstier || 'B');
             
             document.getElementById('player-modal').style.display = 'flex';
         }
