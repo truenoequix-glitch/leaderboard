@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>zTeam | Leaderboard & Tiers Premium</title>
+    <title>zTeam | Leaderboard Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { background-color: #0d111a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
-        /* TARJETA DE JUGADOR DE LA LISTA PRINCIPAL */
+        /* TARJETA DE JUGADOR PRINCIPAL */
         .player-card {
             background: linear-gradient(90deg, #111723 0%, #0f1420 100%); 
             border: 1px solid #1f283d; border-radius: 8px; margin-bottom: 10px;
@@ -19,7 +19,7 @@
         }
         .player-card:hover { border-color: #ff4d4d; transform: translateX(4px); }
 
-        /* ZONA DE POSICIÓN CORTADA EN TARJETA PRINCIPAL */
+        /* ZONA DE POSICIÓN CORTADA DIAGONAL */
         .rank-badge-zone {
             height: 100%; width: 135px; display: flex; align-items: center; padding-left: 15px;
             position: relative; z-index: 2; clip-path: polygon(0 0, 85% 0, 65% 100%, 0% 100%);
@@ -33,7 +33,7 @@
         .avatar-inside-rank { height: 100%; width: 55px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
         .avatar-inside-rank img { height: 115%; object-fit: contain; transform: translateY(8px); }
 
-        /* EFECTO DE DESTELLO LUMINOSO CADA 5 SEGUNDOS */
+        /* EFECTO DE DESTELLO LUMINOSO (TOP 1, 2, 3) */
         .podium-glow::after {
             content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
@@ -41,43 +41,44 @@
         }
         @keyframes sweepGlow { 0% { left: -150%; } 12% { left: 150%; } 100% { left: 150%; } }
 
-        /* CIRCULOS DE TIERS MINIATURA (ESTILO TU SEGUNDA FOTO) */
-        .tier-mini-badge {
-            display: flex; flex-direction: column; align-items: center; width: 42px;
-        }
+        /* CIRCULOS DE TIERS MINIATURA (LISTA PRINCIPAL) */
+        .tier-mini-badge { display: flex; flex-direction: column; align-items: center; width: 42px; }
         .tier-circle-icon {
-            width: 32px; height: 32px; background: #171f30; border: 2px solid #2b3752;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 5px;
+            width: 34px; height: 34px; background: #171f30; border: 2px solid #2b3752;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; p: 4px; overflow: hidden;
         }
-        .tier-circle-icon img { width: 100%; height: 100%; object-fit: contain; }
-        .tier-label-sub { font-size: 9px; font-weight: 900; margin-top: 2px; text-transform: uppercase; }
+        .tier-circle-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .tier-label-sub { font-size: 9px; font-weight: 900; margin-top: 2px; text-transform: uppercase; text-align: center; }
 
-        /* COLORES Y BRILLOS PARA LOS TEXTOS DE LOS TIERS */
-        .tier-ht3 { color: #ff6633; .tier-circle-icon { border-color: #ff6633; } }
+        /* ESTILOS DE COLORES PARA COLUMNAS DE TIERS */
+        .tier-ht3 { color: #ff6633; }
         .tier-ht1 { color: #ffcc00; }
         .tier-lt2 { color: #8ba2bd; }
-        .tier-b { color: #5555ff; }
+        .tier-none { color: #4b5563; }
 
-        /* DISEÑO DE CAJA CORTADA DENTRO DEL MODAL (IGUAL A LA IMAGEN 1) */
+        /* CAJAS DE DISEÑO CORTADO DENTRO DEL MODAL */
         .modal-position-box {
             background: #171f30; border: 1px solid #25314a; border-radius: 6px;
-            display: flex; align-items: center; overflow: hidden; height: 48px;
+            display: flex; align-items: center; overflow: hidden; height: 44px; margin-bottom: 8px;
         }
         .modal-position-left {
-            height: 100%; width: 85px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; font-weight: 900; font-style: italic;
+            height: 100%; width: 90px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; font-weight: 900; font-style: italic;
             clip-path: polygon(0 0, 100% 0, 78% 100%, 0% 100%);
         }
 
         /* MODAL */
         #player-modal {
-            display: none; position: fixed; inset: 0; background: rgba(5,7,12,0.92);
+            display: none; position: fixed; inset: 0; background: rgba(5,7,12,0.94);
             z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: #0f1422; border: 1px solid #25314a; width: 95%; max-width: 420px;
-            padding: 24px; border-radius: 16px; position: relative;
+            background: #0f1422; border: 1px solid #25314a; width: 95%; max-width: 430px;
+            padding: 24px; border-radius: 16px; position: relative; max-height: 90vh; overflow-y: auto;
         }
+        
+        /* Ocultar barra de scroll del modal */
+        .modal-content::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
 <body class="p-4 md:p-10 bg-[#070a12]">
@@ -89,35 +90,65 @@
             <button class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl font-bold" onclick="closeModal()">&times;</button>
             
             <div class="text-center mb-5">
-                <div class="relative inline-block mb-3">
+                <div class="relative inline-block mb-2">
                     <img id="m-img" src="" class="w-20 h-20 rounded-full border-2 border-yellow-500/80 p-0.5 bg-[#171f30]">
                 </div>
-                <h2 id="m-name" class="text-2xl font-black tracking-tight text-white mb-1"></h2>
-                <div id="m-rank" class="inline-flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                <h2 id="m-name" class="text-2xl font-black tracking-tight text-white mb-0.5"></h2>
+                <div id="m-rank" class="inline-flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
                     ⭐ Combat Master
                 </div>
                 <p id="m-region" class="text-gray-500 text-xs font-bold mt-1 uppercase tracking-wider"></p>
             </div>
 
             <div class="mb-5">
-                <p class="text-[9px] font-black text-gray-500 mb-2 tracking-widest uppercase">Perfiles Sociales</p>
+                <p class="text-[9px] font-black text-gray-500 mb-1.5 tracking-widest uppercase">Perfiles Sociales</p>
                 <div id="redes-container" class="grid grid-cols-3 gap-2">
                     </div>
             </div>
 
-            <div class="mb-5">
-                <p class="text-[9px] font-black text-gray-500 mb-2 tracking-widest uppercase">Position</p>
+            <div class="mb-2">
+                <p class="text-[9px] font-black text-gray-500 mb-2 tracking-widest uppercase">Estadísticas por Modalidad</p>
+                
                 <div class="modal-position-box">
-                    <div id="m-modal-bg-rank" class="modal-position-left text-black bg-[#e0a910]">
-                        <span id="m-pos-num">1.</span>
+                    <div id="m-box-bg-gen" class="modal-position-left text-black bg-[#e0a910]">
+                        <span id="m-pos-gen">1.</span>
                     </div>
                     <div class="flex items-center justify-between flex-1 px-4">
-                        <span class="text-xs font-black tracking-wider text-gray-200 uppercase flex items-center gap-1.5">
-                            🏆 <span id="m-mode-title">OVERALL</span>
-                        </span>
-                        <span id="m-elo-text" class="text-xs font-bold text-gray-400"></span>
+                        <span class="text-xs font-black tracking-wider text-gray-200 uppercase">🌍 OVERALL</span>
+                        <span id="m-elo-gen" class="text-xs font-bold text-gray-400"></span>
                     </div>
                 </div>
+
+                <div class="modal-position-box">
+                    <div id="m-box-bg-bf" class="modal-position-left text-white bg-red-600">
+                        <span id="m-pos-bf">-</span>
+                    </div>
+                    <div class="flex items-center justify-between flex-1 px-4">
+                        <span class="text-xs font-black tracking-wider text-gray-200 uppercase">⚔️ BEDFIGHT</span>
+                        <span id="m-elo-bf" class="text-xs font-bold text-gray-400"></span>
+                    </div>
+                </div>
+
+                <div class="modal-position-box">
+                    <div id="m-box-bg-rk" class="modal-position-left text-white bg-indigo-600">
+                        <span id="m-pos-rk">-</span>
+                    </div>
+                    <div class="flex items-center justify-between flex-1 px-4">
+                        <span class="text-xs font-black tracking-wider text-gray-200 uppercase">🏅 RANKED BW</span>
+                        <span id="m-elo-rk" class="text-xs font-bold text-gray-400"></span>
+                    </div>
+                </div>
+
+                <div class="modal-position-box">
+                    <div id="m-box-bg-bw" class="modal-position-left text-white bg-emerald-600">
+                        <span id="m-pos-bw">-</span>
+                    </div>
+                    <div class="flex items-center justify-between flex-1 px-4">
+                        <span class="text-xs font-black tracking-wider text-gray-200 uppercase">🛏️ BEDWARS</span>
+                        <span id="m-elo-bw" class="text-xs font-bold text-gray-400"></span>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -152,20 +183,23 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
         const DISCORD_INVITE = "https://discord.gg/XG8EpJXuXv";
 
-        // URL de iconos representativos de Minecraft para los círculos de modalidades
-        const ICON_BF = "https://images.builder.codes/raw/sword_icon.png" || "https://cdn-icons-png.flaticon.com/512/9312/9312173.png"; 
-        const ICON_RK = "https://images.builder.codes/raw/ender_icon.png" || "https://cdn-icons-png.flaticon.com/512/3112/3112946.png"; 
-        const ICON_BW = "https://images.builder.codes/raw/bed_icon.png" || "https://cdn-icons-png.flaticon.com/512/2919/2919648.png"; 
+        // ENLACES DIRECTOS PROPORCIONADOS POR EL USUARIO
+        const LOGO_TIKTOK = "https://i.ibb.co/VWTg69wG/tiktok.png";
+        const LOGO_INSTAGRAM = "https://i.ibb.co/6R4ZgpyQ/instagram.png";
+        const LOGO_BEDFIGHT = "https://i.ibb.co/M5yGmfXd/bedfight.png";
+        const LOGO_BEDWARS = "https://i.ibb.co/YFrcLPKp/bedwars.png";
+        const LOGO_RBW = "https://images.builder.codes/raw/ender_icon.png"; // Predeterminado para Ranked
 
         let globalPlayersData = [];
         let currentMode = 'general';
 
         function getTierStyleClass(tier) {
-            let t = tier ? tier.trim().toUpperCase() : "B";
+            if (!tier || tier.trim() === "" || tier.trim() === "-") return "tier-none";
+            let t = tier.trim().toUpperCase();
             if (t.includes("HT3")) return "tier-ht3";
             if (t.includes("HT1")) return "tier-ht1";
             if (t.includes("LT2")) return "tier-lt2";
-            return "tier-b";
+            return "tier-ht1";
         }
 
         function changeMode(mode) {
@@ -196,6 +230,21 @@
             });
         }
 
+        // Función para calcular posiciones dinámicas en todas las modalidades
+        function getRankOfPlayer(playerUUID, mode) {
+            let list = globalPlayersData.map(p => {
+                let pts = 0;
+                if (mode === 'general') pts = parseInt(p.bedfightpuntos || 0) + parseInt(p.rankedpuntos || 0) + parseInt(p.bedwarspuntos || 0);
+                else if (mode === 'bedfight') pts = parseInt(p.bedfightpuntos || 0);
+                else if (mode === 'ranked') pts = parseInt(p.rankedpuntos || 0);
+                else if (mode === 'bedwars') pts = parseInt(p.bedwarspuntos || 0);
+                return { uuid: p.uuid, pts: isNaN(pts) ? 0 : pts };
+            });
+            list.sort((a, b) => b.pts - a.pts);
+            let position = list.findIndex(item => item.uuid === playerUUID) + 1;
+            return position > 0 ? position : "-";
+        }
+
         function renderLeaderboard() {
             const container = document.getElementById('leaderboard');
             container.innerHTML = '';
@@ -211,11 +260,11 @@
 
                 let totalPts = bfPts + rkPts + bwPts;
                 let targetPts = totalPts;
-                let targetTier = p.tier || "LT2";
+                let targetTier = p.tier || "-";
 
-                if (currentMode === 'bedfight') { targetPts = bfPts; targetTier = p.bedfighttier || "LT2"; }
-                else if (currentMode === 'ranked') { targetPts = rkPts; targetTier = p.rankedtier || "LT2"; }
-                else if (currentMode === 'bedwars') { targetPts = bwPts; targetTier = p.bedwarstier || "LT2"; }
+                if (currentMode === 'bedfight') { targetPts = bfPts; targetTier = p.bedfighttier || "-"; }
+                else if (currentMode === 'ranked') { targetPts = rkPts; targetTier = p.rankedtier || "-"; }
+                else if (currentMode === 'bedwars') { targetPts = bwPts; targetTier = p.bedwarstier || "-"; }
 
                 return { ...p, bfPts, rkPts, bwPts, totalPts, targetPts, targetTier };
             });
@@ -239,13 +288,17 @@
                 if(p.targetPts >= 250) rankTitle = "Combat Master";
                 if(p.targetPts >= 500) rankTitle = "Combat Sorcerer";
 
-                // DETECTAR CLASES DE LOS TIERS EN LA HOJA DE EXCEL
-                let classBf = getTierStyleClass(p.bedfighttier || 'LT2');
-                let classRk = getTierStyleClass(p.rankedtier || 'LT2');
-                let classBw = getTierStyleClass(p.bedwarstier || 'LT2');
+                // ESTILOS DE TIERS INDIVIDUALES O VACÍOS
+                let classBf = getTierStyleClass(p.bedfighttier);
+                let classRk = getTierStyleClass(p.rankedtier);
+                let classBw = getTierStyleClass(p.bedwarstier);
+
+                let labelBf = (p.bedfighttier && p.bedfighttier.trim() !== "") ? p.bedfighttier : "-";
+                let labelRk = (p.rankedtier && p.rankedtier.trim() !== "") ? p.rankedtier : "-";
+                let labelBw = (p.bedwarstier && p.bedwarstier.trim() !== "") ? p.bedwarstier : "-";
 
                 container.innerHTML += `
-                    <div class="player-card ${podiumCardClass}" onclick="openModal('${pString}', '${rank}', '${rankTitle}')">
+                    <div class="player-card ${podiumCardClass}" onclick="openModal('${pString}', '${cleanUUID}', '${rankTitle}')">
                         <div class="flex items-center h-full">
                             <div class="rank-badge-zone ${rankZoneClass}">
                                 <span class="rank-num-text ${rankNumColor}">${rank}</span>
@@ -255,7 +308,7 @@
                             </div>
                             
                             <div class="ml-4">
-                                <div class="font-black uppercase italic text-sm md:text-md text-gray-100">${p.jugador}</div>
+                                <div class="font-black uppercase italic text-sm text-gray-100">${p.jugador}</div>
                                 <div class="flex items-center gap-1.5 mt-0.5">
                                     <span class="text-[9px] text-gray-400 font-bold uppercase">${rankTitle}</span>
                                     <span class="text-[9px] text-gray-600 font-bold">•</span>
@@ -266,16 +319,16 @@
 
                         <div class="flex items-center gap-2.5 pr-4">
                             <div class="tier-mini-badge ${classBf}">
-                                <div class="tier-circle-icon"><img src="https://cdn-icons-png.flaticon.com/512/9312/9312173.png"></div>
-                                <span class="tier-label-sub">${p.bedfighttier || 'LT2'}</span>
+                                <div class="tier-circle-icon"><img src="${LOGO_BEDFIGHT}"></div>
+                                <span class="tier-label-sub">${labelBf}</span>
                             </div>
                             <div class="tier-mini-badge ${classRk}">
-                                <div class="tier-circle-icon"><img src="https://cdn-icons-png.flaticon.com/512/3112/3112946.png"></div>
-                                <span class="tier-label-sub">${p.rankedtier || 'LT2'}</span>
+                                <div class="tier-circle-icon"><img src="${LOGO_RBW}"></div>
+                                <span class="tier-label-sub">${labelRk}</span>
                             </div>
                             <div class="tier-mini-badge ${classBw}">
-                                <div class="tier-circle-icon"><img src="https://cdn-icons-png.flaticon.com/512/2919/2919648.png"></div>
-                                <span class="tier-label-sub">${p.bedwarstier || 'LT2'}</span>
+                                <div class="tier-circle-icon"><img src="${LOGO_BEDWARS}"></div>
+                                <span class="tier-label-sub">${labelBw}</span>
                             </div>
                         </div>
                     </div>
@@ -283,48 +336,64 @@
             });
         }
 
-        function openModal(playerDataStr, pos, rankTitle) {
+        function openModal(playerDataStr, cleanUUID, rankTitle) {
             const p = JSON.parse(decodeURIComponent(playerDataStr));
-            let cleanUUID = p.uuid.replace(/-/g, "").trim();
 
             document.getElementById('m-name').innerText = p.jugador;
             document.getElementById('m-img').src = `https://visage.surgeplay.com/bust/128/${cleanUUID}`;
             document.getElementById('m-region').innerText = `Region: ${p.region || 'North America'}`;
             document.getElementById('m-rank').innerText = `⭐ ${rankTitle}`;
 
-            // Configurar caja de posición interna idéntica a la imagen de referencia
-            document.getElementById('m-pos-num').innerText = `${pos}.`;
-            let modeText = currentMode === 'general' ? 'OVERALL' : currentMode.toUpperCase();
-            document.getElementById('m-mode-title').innerText = modeText;
-            document.getElementById('m-elo-text').innerText = `(${p.targetPts} points)`;
+            // CALCULAR POSICIONES EN TIEMPO REAL PARA EL DESGLOSE COMPLETO DEL MODAL
+            let posGen = getRankOfPlayer(p.uuid, 'general');
+            let posBf = getRankOfPlayer(p.uuid, 'bedfight');
+            let posRk = getRankOfPlayer(p.uuid, 'ranked');
+            let posBw = getRankOfPlayer(p.uuid, 'bedwars');
 
-            // Color del fondo cortado del modal de acuerdo al rango
-            const modalBgRank = document.getElementById('m-modal-bg-rank');
-            if(pos == 1) modalBgRank.className = "modal-position-left text-black bg-[#e0a910]";
-            else if(pos == 2) modalBgRank.className = "modal-position-left text-black bg-[#a1a8b8]";
-            else if(pos == 3) modalBgRank.className = "modal-position-left text-white bg-[#cc6925]";
-            else modalBgRank.className = "modal-position-left text-gray-300 bg-[#1f293d]";
+            // ASIGNAR NUMERACIONES A LAS CAJAS DIAGONALES DEL MODAL
+            document.getElementById('m-pos-gen').innerText = `${posGen}.`;
+            document.getElementById('m-pos-bf').innerText = `${posBf}.`;
+            document.getElementById('m-pos-rk').innerText = `${posRk}.`;
+            document.getElementById('m-pos-bw').innerText = `${posBw}.`;
 
-            // LOGICA REESTRUCTURADA PARA REDES SOCIALES EN FILA EN EL MODAL
+            // ASIGNAR ELOS Y TIERS CORRESPONDIENTES A LAS CAJAS
+            let tierGenLabel = (p.tier && p.tier.trim() !== "") ? p.tier : "-";
+            let tierBfLabel = (p.bedfighttier && p.bedfighttier.trim() !== "") ? p.bedfighttier : "-";
+            let tierRkLabel = (p.rankedtier && p.rankedtier.trim() !== "") ? p.rankedtier : "-";
+            let tierBwLabel = (p.bedwarstier && p.bedwarstier.trim() !== "") ? p.bedwarstier : "-";
+
+            document.getElementById('m-elo-gen').innerText = `${tierGenLabel} (${p.totalPts || 0} points)`;
+            document.getElementById('m-elo-bf').innerText = `${tierBfLabel} (${p.bfPts || 0} points)`;
+            document.getElementById('m-elo-rk').innerText = `${tierRkLabel} (${p.rkPts || 0} points)`;
+            document.getElementById('m-elo-bw').innerText = `${tierBwLabel} (${p.bwPts || 0} points)`;
+
+            // DINÁMICA DE COLOR DE ACUERDO AL PODIO GENERAL DE LA CAJA PRINCIPAL DE MODAL
+            const boxGen = document.getElementById('m-box-bg-gen');
+            if(posGen == 1) boxGen.className = "modal-position-left text-black bg-[#e0a910]";
+            else if(posGen == 2) boxGen.className = "modal-position-left text-black bg-[#a1a8b8]";
+            else if(posGen == 3) boxGen.className = "modal-position-left text-white bg-[#cc6925]";
+            else boxGen.className = "modal-position-left text-gray-300 bg-[#1f293d]";
+
+            // LOGICA REESTRUCTURADA PARA BOTONES SOCIALES PERSONALIZADOS
             const redesContainer = document.getElementById('redes-container');
             redesContainer.innerHTML = '';
             let contadorRedes = 0;
 
-            const crearEnlaceRed = (url, plataforma, estiloExtra) => {
+            const crearEnlaceRed = (url, plataforma, iconUrl) => {
                 if (url && url.trim() !== "") {
                     contadorRedes++;
-                    return `<a href="${url.trim()}" target="_blank" class="bg-[#171f30] hover:bg-[#1e2940] border border-gray-800 text-gray-300 text-[10px] font-bold py-2 px-1 rounded text-center transition block truncate">
-                        ${plataforma} ↗
-                    </a>`;
+                    return `
+                        <a href="${url.trim()}" target="_blank" class="bg-[#171f30] hover:bg-[#1e2940] border border-gray-800 text-gray-300 text-[10px] font-bold py-2 px-1 rounded flex items-center justify-center gap-1.5 transition block truncate">
+                            <img src="${iconUrl}" class="w-3.5 h-3.5 object-contain"> ${plataforma}
+                        </a>`;
                 }
                 return '';
             };
 
-            redesContainer.innerHTML += crearEnlaceRed(p.redes, 'YouTube');
-            redesContainer.innerHTML += crearEnlaceRed(p.tiktok, 'TikTok');
-            redesContainer.innerHTML += crearEnlaceRed(p.instagram, 'Instagram');
+            redesContainer.innerHTML += crearEnlaceRed(p.redes, 'YouTube', 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png');
+            redesContainer.innerHTML += crearEnlaceRed(p.tiktok, 'TikTok', LOGO_TIKTOK);
+            redesContainer.innerHTML += crearEnlaceRed(p.instagram, 'Instagram', LOGO_INSTAGRAM);
 
-            // Si el jugador no tiene ninguna red agregada en la hoja de cálculo
             if (contadorRedes === 0) {
                 redesContainer.className = "block text-center";
                 redesContainer.innerHTML = `
