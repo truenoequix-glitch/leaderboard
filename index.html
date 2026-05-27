@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>zTeam | Leaderboard & Servers</title>
+    <title>zTeam | Multi-Leaderboard & Servers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
         .tier-a-plus { color: #ff8c00; }
         .tier-a-minus { color: #ffcc00; }
         .tier-b-plus { color: #00ff00; }
-        .tier-b { color: #00008b; }
+        .tier-b { color: #5555ff; }
 
         /* GRADIENTE TOP 1 */
         .top1-name {
@@ -39,15 +39,15 @@
             z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(5px);
         }
         .modal-content {
-            background: #111723; border: 1px solid #1f283d; width: 90%; max-width: 400px;
+            background: #111723; border: 1px solid #1f283d; width: 90%; max-width: 450px;
             padding: 30px; border-radius: 20px; position: relative; text-align: center;
         }
 
         /* CÍRCULO DE TIER ÚNICO */
         .tier-circle-single {
-            width: 50px; height: 50px; background: #1a2235; border: 2px solid #2d364d;
+            width: 45px; height: 45px; background: #1a2235; border: 2px solid #2d364d;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 1.2rem; margin: 0 auto;
+            font-weight: 900; font-size: 1.1rem; margin: 0 auto;
         }
 
         .server-block {
@@ -64,6 +64,12 @@
         #copy-toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* TABLA DE MODALIDADES EN MODAL */
+        .modal-tier-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #161d2b; padding: 8px 12px; border-radius: 8px; border: 1px solid #1f283d;
+        }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -81,24 +87,40 @@
                 Combat Ace
             </div>
             
-            <p id="m-region" class="text-gray-500 text-sm font-bold mb-6 italic uppercase"></p>
+            <p id="m-region" class="text-gray-500 text-sm font-bold mb-4 italic uppercase"></p>
             
-            <a id="m-namemc" href="#" target="_blank" class="bg-[#1a2235] text-[10px] px-4 py-2 rounded border border-gray-700 hover:bg-gray-800 transition mb-8 inline-block font-bold">
-                n NameMC ↗
-            </a>
+            <div class="flex justify-center gap-2 mb-6">
+                <a id="m-namemc" href="#" target="_blank" class="bg-[#1a2235] text-[10px] px-4 py-2 rounded border border-gray-700 hover:bg-gray-800 transition inline-block font-bold">
+                    NameMC ↗
+                </a>
+                <a id="m-redes" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-4 py-2 rounded transition inline-block font-bold hidden">
+                    Redes Sociales ↗
+                </a>
+            </div>
 
-            <div class="text-left mb-6">
-                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Position</p>
+            <div class="text-left mb-4">
+                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Posición Global / Puntuación</p>
                 <div class="bg-[#1a2235] p-3 rounded-lg border border-gray-800 flex justify-between items-center">
-                    <span id="m-pos" class="italic font-black text-xl italic text-yellow-400">#1.</span>
-                    <span class="text-xs font-bold text-gray-300 uppercase italic">🏆 Overall <span id="m-elo-text" class="text-gray-500 ml-1"></span></span>
+                    <span id="m-pos" class="italic font-black text-xl text-yellow-400">#1.</span>
+                    <span class="text-xs font-bold text-gray-300 uppercase italic">🏆 Total <span id="m-elo-text" class="text-gray-500 ml-1"></span></span>
                 </div>
             </div>
 
             <div class="text-left">
-                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Tier</p>
-                <div class="bg-[#1a2235]/50 p-6 rounded-xl border border-gray-800/50">
-                    <div id="m-tier-circle" class="tier-circle-single"></div>
+                <p class="text-[10px] font-black text-gray-500 mb-2 tracking-widest uppercase">Tiers por Modalidad</p>
+                <div class="space-y-2 bg-[#1a2235]/50 p-4 rounded-xl border border-gray-800/50">
+                    <div class="modal-tier-row">
+                        <div class="flex items-center gap-2"><img id="m-ico-bf" class="w-6 h-6 rounded"><span class="text-xs font-bold">Bedfight</span></div>
+                        <div id="m-tier-bf" class="tier-circle-single"></div>
+                    </div>
+                    <div class="modal-tier-row">
+                        <div class="flex items-center gap-2"><img id="m-ico-rk" class="w-6 h-6 rounded"><span class="text-xs font-bold">Ranked BW</span></div>
+                        <div id="m-tier-rk" class="tier-circle-single"></div>
+                    </div>
+                    <div class="modal-tier-row">
+                        <div class="flex items-center gap-2"><img id="m-ico-bw" class="w-6 h-6 rounded"><span class="text-xs font-bold">Bedwars</span></div>
+                        <div id="m-tier-bw" class="tier-circle-single"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,69 +150,158 @@
             </div>
         </div>
 
+        <div class="mb-6">
+            <h3 class="text-sm font-black text-gray-500 mb-3 uppercase tracking-[0.2em]">Seleccionar Leaderboard</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#111723] p-2 rounded-xl border border-gray-800">
+                <button onclick="changeMode('general')" id="btn-general" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black">🌍 General</button>
+                <button onclick="changeMode('bedfight')" id="btn-bedfight" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">⚔️ Bedfight</button>
+                <button onclick="changeMode('ranked')" id="btn-ranked" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🏅 Ranked BW</button>
+                <button onclick="changeMode('bedwars')" id="btn-bedwars" class="py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400">🛏️ Bedwars</button>
+            </div>
+        </div>
+
         <div id="leaderboard" class="space-y-3"></div>
     </div>
 
     <script>
+        // URL de tu hoja de cálculo publicada en formato CSV
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlfD0FvQ-kVK2leat4n9qOvfu3zJ8rlv-B8qm9434NOMGCV4pOyw7B-cchbzFCpKCVSOGFhCI0YST_/pub?output=csv';
+
+        // ENLACES MODIFICABLES PARA LOS ICONOS DE LAS MODALIDADES
+        const ICON_BEDFIGHT = "https://cdn-icons-png.flaticon.com/512/9312/9312173.png"; 
+        const ICON_RANKED   = "https://cdn-icons-png.flaticon.com/512/3112/3112946.png"; 
+        const ICON_BEDWARS  = "https://cdn-icons-png.flaticon.com/512/2919/2919648.png"; 
+
+        let globalPlayersData = [];
+        let currentMode = 'general'; // Modos: general, bedfight, ranked, bedwars
+
+        function getTierClass(tier) {
+            let t = tier ? tier.trim().toUpperCase() : "B";
+            if (t === "S+") return "tier-s-plus";
+            if (t === "S") return "tier-s";
+            if (t === "A+") return "tier-a-plus";
+            if (t === "A-") return "tier-a-minus";
+            if (t === "B+") return "tier-b-plus";
+            return "tier-b";
+        }
+
+        function changeMode(mode) {
+            currentMode = mode;
+            ['general', 'bedfight', 'ranked', 'bedwars'].forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                if (m === mode) {
+                    btn.className = "py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition bg-[#ff4d4d] text-black";
+                } else {
+                    btn.className = "py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition hover:bg-gray-800 text-gray-400";
+                }
+            });
+            renderLeaderboard();
+        }
 
         function loadData() {
             Papa.parse(CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    let players = results.data.filter(r => r.UUID);
-                    players.sort((a, b) => parseInt(b.Puntos || 0) - parseInt(a.Puntos || 0));
-                    const container = document.getElementById('leaderboard');
-                    container.innerHTML = '';
-
-                    players.forEach((p, index) => {
-                        let rankColor = index === 0 ? "text-yellow-400" : (index === 1 ? "text-slate-300" : (index === 2 ? "text-orange-400" : "text-gray-500"));
-                        let t = p.Tier.trim().toUpperCase();
-                        let tierClass = t === "S+" ? "tier-s-plus" : (t === "S" ? "tier-s" : (t === "A+" ? "tier-a-plus" : (t === "A-" ? "tier-a-minus" : (t === "B+" ? "tier-b-plus" : "tier-b"))));
-                        let cleanUUID = p.UUID.replace(/-/g, "").trim();
-                        
-                        let elo = parseInt(p.Puntos || 0);
-                        let rankTitle = "Combat Ace";
-                        if(elo >= 100) rankTitle = "Combat Master";
-                        if(elo >= 550) rankTitle = "Combat Sorcerer";
-
-                        container.innerHTML += `
-                            <div class="player-card" onclick="openModal('${p.Jugador}', '${cleanUUID}', '${p.Region}', '${p.Tier}', '${elo}', '${index+1}', '${tierClass}', '${rankTitle}')">
-                                <div class="flex items-center gap-5">
-                                    <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
-                                    <img src="https://visage.surgeplay.com/bust/64/${cleanUUID}" class="h-14 w-14 rounded-lg bg-[#1a2235]" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
-                                    <div>
-                                        <div class="font-black uppercase italic text-lg leading-tight ${index === 0 ? 'top1-name' : 'text-gray-100'}">${p.Jugador}</div>
-                                        <div class="text-[10px] font-black text-gray-500 tracking-widest uppercase">${p.Region}</div>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="font-black text-xl italic ${tierClass}">${p.Tier}</div>
-                                    <div class="text-[10px] font-bold text-gray-400 uppercase">${elo} ELO</div>
-                                </div>
-                            </div>
-                        `;
-                    });
+                    globalPlayersData = results.data.filter(r => r.UUID);
+                    renderLeaderboard();
                 }
             });
         }
 
-        function openModal(name, uuid, region, tier, elo, pos, tierClass, rankTitle) {
-            document.getElementById('m-name').innerText = name;
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboard');
+            container.innerHTML = '';
+
+            // Estructuramos y limpiamos las puntuaciones individuales
+            let sortedPlayers = globalPlayersData.map(p => {
+                let bfPts = parseInt(p.Bedfight_Puntos || p.Puntos || 0); // fallback por si acaso
+                let rkPts = parseInt(p.Ranked_Puntos || 0);
+                let bwPts = parseInt(p.Bedwars_Puntos || 0);
+                let totalPts = bfPts + rkPts + bwPts;
+
+                let targetPts = totalPts;
+                let targetTier = p.Tier || "B";
+
+                if (currentMode === 'bedfight') { targetPts = bfPts; targetTier = p.Bedfight_Tier || "B"; }
+                else if (currentMode === 'ranked') { targetPts = rkPts; targetTier = p.Ranked_Tier || "B"; }
+                else if (currentMode === 'bedwars') { targetPts = bwPts; targetTier = p.Bedwars_Tier || "B"; }
+
+                return { ...p, bfPts, rkPts, bwPts, totalPts, targetPts, targetTier };
+            });
+
+            // Ordenar de mayor a menor puntuación según el filtro seleccionado
+            sortedPlayers.sort((a, b) => b.targetPts - a.targetPts);
+
+            sortedPlayers.forEach((p, index) => {
+                let rankColor = index === 0 ? "text-yellow-400" : (index === 1 ? "text-slate-300" : (index === 2 ? "text-orange-400" : "text-gray-500"));
+                let tierClass = getTierClass(p.targetTier);
+                let cleanUUID = p.UUID.replace(/-/g, "").trim();
+                
+                let rankTitle = "Combat Ace";
+                if(p.targetPts >= 100) rankTitle = "Combat Master";
+                if(p.targetPts >= 550) rankTitle = "Combat Sorcerer";
+
+                // Guardamos el Objeto serializado para pasarlo al Modal de forma íntegra
+                let pString = encodeURIComponent(JSON.stringify(p));
+
+                container.innerHTML += `
+                    <div class="player-card" onclick="openModal('${pString}', '${index+1}', '${rankTitle}')">
+                        <div class="flex items-center gap-5">
+                            <span class="text-2xl font-black italic ${rankColor}">#${index + 1}</span>
+                            <img src="https://visage.surgeplay.com/bust/64/${cleanUUID}" class="h-14 w-14 rounded-lg bg-[#1a2235]" onerror="this.src='https://visage.surgeplay.com/bust/64/steve'">
+                            <div>
+                                <div class="font-black uppercase italic text-lg leading-tight ${index === 0 ? 'top1-name' : 'text-gray-100'}">${p.Jugador}</div>
+                                <div class="text-[10px] font-black text-gray-500 tracking-widest uppercase">${p.Region}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-xl italic ${tierClass}">${p.targetTier}</div>
+                            <div class="text-[10px] font-bold text-gray-400 uppercase">${p.targetPts} PTS</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openModal(playerDataStr, pos, rankTitle) {
+            const p = JSON.parse(decodeURIComponent(playerDataStr));
+            let cleanUUID = p.UUID.replace(/-/g, "").trim();
+
+            document.getElementById('m-name').innerText = p.Jugador;
             document.getElementById('m-name').className = (pos == 1) ? "text-3xl italic top1-name" : "text-3xl font-black italic text-white";
-            document.getElementById('m-img').src = `https://visage.surgeplay.com/bust/128/${uuid}`;
-            document.getElementById('m-region').innerText = region;
-            document.getElementById('m-elo-text').innerText = `(${elo} points)`;
-            document.getElementById('m-pos').innerText = `${pos}.`;
+            document.getElementById('m-img').src = `https://visage.surgeplay.com/bust/128/${cleanUUID}`;
+            document.getElementById('m-region').innerText = p.Region;
+            document.getElementById('m-elo-text').innerText = `(${p.targetPts} pts listado)`;
+            document.getElementById('m-pos').innerText = `#${pos}.`;
             document.getElementById('m-rank').innerText = rankTitle;
-            document.getElementById('m-namemc').href = `https://namemc.com/profile/${name}`;
+            document.getElementById('m-namemc').href = `https://namemc.com/profile/${p.Jugador}`;
             
-            // Ajustar el círculo único del Tier
-            const circle = document.getElementById('m-tier-circle');
-            circle.innerText = tier;
-            circle.className = `tier-circle-single ${tierClass}`;
+            // Redes Sociales Dinámicas (Fila opcional)
+            const redBtn = document.getElementById('m-redes');
+            if (p.Redes && p.Redes.trim() !== "") {
+                redBtn.href = p.Redes.trim();
+                redBtn.classList.remove('hidden');
+            } else {
+                redBtn.classList.add('hidden');
+            }
+
+            // Actualizar Iconos de Modalidades desde las variables asignadas arriba
+            document.getElementById('m-ico-bf').src = ICON_BEDFIGHT;
+            document.getElementById('m-ico-rk').src = ICON_RANKED;
+            document.getElementById('m-ico-bw').src = ICON_BEDWARS;
+
+            // Renderizar los círculos de Tiers internos
+            setModalTierCircle('m-tier-bf', p.Bedfight_Tier || p.Tier || 'B');
+            setModalTierCircle('m-tier-rk', p.Ranked_Tier || 'B');
+            setModalTierCircle('m-tier-bw', p.Bedwars_Tier || 'B');
             
             document.getElementById('player-modal').style.display = 'flex';
+        }
+
+        function setModalTierCircle(elementId, tierValue) {
+            const circle = document.getElementById(elementId);
+            circle.innerText = tierValue;
+            circle.className = `tier-circle-single ${getTierClass(tierValue)}`;
         }
 
         function closeModal() { document.getElementById('player-modal').style.display = 'none'; }
